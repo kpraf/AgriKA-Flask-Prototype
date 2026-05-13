@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriKA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Josefin Sans'>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href='https://fonts.googleapis.com/css?family=Source Sans Pro' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" />
+    <!-- Font Awesome or other libraries -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css" />
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- jQuery(-->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+
+
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="nav-container">
+          <!-- Logo Section -->
+          <div class="nav-logo">
+            <a href="{{ url_for('home') }}">
+              <img src="{{ url_for('static', filename='images/AgriKA.png') }}" alt="Logo">
+            </a>
+          </div>
+          <!-- Navigation Links -->
+          <ul class="nav-links">
+            <li>
+              <a href="{{ url_for('home') }}">
+                <span class="nav-label">HOME</span>
+              </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    <span class="nav-label">DATA</span> <!-- Added Analytics Nav Update -->
+                </a>
+            </li>
+          </ul>
+        </div>
+    </nav>
+    
+    <!-- Main Container -->
+    <div id="container">
+        <!-- Sidebar Container -->
+        <div id="sidebar-container">
+            <!-- Sidebar Top: Toggle Buttons for Real-Time / Historical Views -->
+            <div id="sidebar-top-container">
+                <button id="realtime-btn" class="hist-toggle-btn realtime-btn active">Real-Time</button>
+                <button id="historical-btn" class="hist-toggle-btn realtime-btn">Historical</button>
+            </div>
+
+            <!-- Sidebar Content -->
+            <div id="sidebar">
+                <!-- Real-Time Content Section -->
+                <div id="realtime-content">
+                    <div id="sticky-container">
+                        <div class="dropdown-container" style="display: none;">
+                            <input type="text"  id="municipality-search" placeholder="Select municipality" onfocus="showDropdown()" oninput="filterDropdown()" onkeydown="navigateDropdown(event)" autocomplete="off" >
+                            <span style="display: none;" id="clear-search" onclick="clearSearch()">❌</span>
+                            <div  style="display: none;" id="municipality-dropdown" class="dropdown-content"></div>
+                        </div> 
+                        <div id="toggle-container">
+                        
+                        <!-- Graph Toggle Dropdown for Real-Time View -->
+                        <select id="graph-toggle-dropdown">
+                            <option value="bar">Bar Graph</option>
+                            <option value="table">Table</option>
+                        </select>
+                        <!-- Sort Dropdown for Real-Time View -->
+                        <select id="sort-dropdown">
+                            <option value="default">Default</option>
+                            <option value="asc">Low to High</option>
+                            <option value="desc">High to Low</option>
+                        </select> 
+                        <!-- Municipality Search for Real time -->
+                                
+                    </div>
+                    
+                    </div>
+                    <!-- Bar Chart Container for Real-Time Data -->
+                    <div id="bar-chart-container">
+                        <canvas id="bar-chart"></canvas>
+                    </div>
+
+                    <!-- Yield Table Container for Real-Time Data (initially hidden) -->
+                    <div id="yield-table-container" style="display: none;">
+                        <table id="data-table" class="styled-table data-table">
+                           <thead>
+                                <tr>
+                                    <th>Municipality</th>
+                                    <th>Yield (t/ha)</th>  <!-- update ni chan -->
+                                </tr>
+                           </thead>
+                           <tbody>
+                                {% for row in realtime_yield_data %}
+                                <tr>
+                                    <td>{{ row.municipality }}</td>
+                                    <td>{{ row.yield }}</td>
+                                </tr>
+                                {% endfor %}
+                           </tbody>
+                        </table>
+                      </div>
+                      <!-- Yield Table Container for Real-Time Data (initially hidden) -->
+                    <div id="yield-table-container" style="display: none;">
+                        <table id="data-table" class="styled-table data-table">
+                           <thead>
+                                <tr>
+                                    <th>Municipality</th>
+                                    <th>Yield (t/ha)</th>  <!-- update ni chan -->
+                                </tr>
+                           </thead>
+                           <tbody>
+                                {% for row in realtime_yield_data %}
+                                <tr>
+                                    <td>{{ row.municipality }}</td>
+                                    <td>{{ row.yield }}</td>
+                                </tr>
+                                {% endfor %}
+                           </tbody>
+                        </table>
+                      </div>
+                     <!-- EDIT NOW PA LAGAY HISTORICAL NG MUNICIPALITY APPEAR ONLY WHEN MUNICIPALITY IS CLICKED-->
+                      <div id="yield-table-container-his" style="display: none;">
+                        <table id="data-table" class="styled-table data-table">
+                           <thead>
+                                <tr>
+                                    <th>Municipality</th>
+                                    <th>Yield (t/ha)</th>  
+                                </tr>
+                           </thead>
+                           <tbody>
+                                {% for row in realtime_yield_data %}
+                                <tr>
+                                    <td>{{ row.municipality }}</td>
+                                    <td>{{ row.yield }}</td>
+                                </tr>
+                                {% endfor %}
+                           </tbody>
+                        </table>
+                      </div>
+                </div>
+
+                <!-- Historical Content Section (initially hidden) -->
+                <div id="historical-content" style="display: none;">
+                    <div id="sticky-container-his">
+                        <div id="toggle-container-his">
+                            <!-- Graph Toggle Dropdown for Historical View -->
+                            <select id="graph-toggle-dropdown-his">
+                                <option value="bar">Bar Graph</option>
+                                <option value="table">Table</option>
+                            </select>
+
+                            <!-- Sort Toggle Dropdown for Historical View -->
+                            <select id="sort-dropdown-his">
+                                <option value="yield-asc">Yield ⬆</option>
+                                <option value="yield-desc">Yield ⬇</option>
+                                <option value="year-asc">Year ⬆</option>
+                                <option value="year-desc">Year ⬇</option>
+                            </select>
+
+
+                            <!-- Year Selection Dropdown -->
+                            <select id="year-dropdown-his" style="display: none;">
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                                <option value="2021">2021</option>
+                                <option value="2020">2020</option>
+                                <option value="2019">2019</option>
+                                <option value="2018">2018</option>
+                            </select>
+
+                            <!-- Season Selection Dropdown -->
+                            <select id="season-dropdown-his" style="display: none;">
+                                <option value="season1">Wet Season</option> <!-- Updated season names here -Zoe -->
+                                <option value="season2">Dry Season</option>
+                            </select>
+                        </div>
+                        <!-- Municipality Search for Historical -->
+                            <div class="dropdown-container-his">
+                                <input type="text" id="municipality-search-his" placeholder="Select municipality" autocomplete="off" >
+                                <span id="clear-search-his">❌</span>
+                                <div class="dropdown-wrapper">
+                                    <div id="municipality-dropdown-his" class="dropdown-list"></div>
+                                </div>
+                            </div>
+                    </div>
+                    
+                    <!-- Bar Chart Container for Historical Data -->
+                    <div id="historical-bar-chart-container">
+                        <canvas id="historical-bar-chart"></canvas>
+                    </div>
+                    
+                    <!-- update ni chan -->
+                    <!-- Yield Table Container for Historical Data (initially hidden) -->
+                    <div id="yield-table-container-his" style="display: none;">
+                       <div class="table-header-wrap">
+                            <h3 id="historical-table-title"></h3> <!-- update ni chan -->
+                       </div>
+                        <table id="data-table-his" class="styled-table data-table-his">
+                            <thead>
+                                <tr>
+                                <!-- JS will populate this -->
+                                <!-- update ni chan -->
+                                </tr>
+                            </thead>
+                            <tbody id="historical-table-body-his">
+                                <!-- JS will populate this -->
+                                <!-- update ni chan -->
+                            </tbody>
+                        </table>
+                    </div>  
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- Main Content Area -->
+        <div id="content-container">
+            <!-- Legend -->
+            <div id="bottom-container">
+                <div class="legend-item">
+                    <span>Average Yield (tons/hectare):</span>
+                </div>
+                <div id="legend-container">
+                    <div class="legend-item">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Map Section --> 
+            <div id="map-container">
+                <div id="map-overlay" style="display: none;">Click to interact with the map</div>
+                <div style="display: none;" id="reload-map-overlay" onclick="clearSearch()">❌</div>
+                <iframe id="map-frame" src="{{ url_for('static', filename='realtime_map.html') }}" width="100%" height="600px" frameborder="0"></iframe> <!-- changes ni perl start -->
+            </div>
+            
+            <!-- FILTERS / INFO Section --> 
+            <div id="filters-container">
+                <!-- INFO  -->
+                <div id="info-bar" class="info-bar">
+                <div class="info-item">
+                    <span class="label">Year:</span>
+                    <span class="value">2025</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Season:</span>
+                    <span class="value">Wet</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Phase:</span>
+                    <span class="value">3</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Updated Since:</span>
+                    <span class="value">08-20-2025</span>
+                </div>
+                </div>
+
+                <!-- Year Slider -->
+                <div id="year-slider-container" style="display: none;">
+                    <label for="year-slider" style="font-weight: bold; font-size: small;">
+                        Year: <span id="selected-year">2024</span>
+                    </label>
+                    <input
+                        type="range"
+                        id="year-slider"
+                        min="2018"
+                        max="2024"
+                        value="2024"
+                        step="1"
+                    />
+                </div>
+                <div id="season-radio-group" style="display: none;">
+                    <label style="font-weight: bold; margin-right: 10px; font-size: small;">Season:</label>
+                    <label class="season-option">
+                        <input type="radio" name="season" value="season2"  />
+                        Dry
+                    </label>
+                    <label class="season-option">
+                        <input type="radio" name="season" value="season1" checked/>
+                        Wet
+                    </label>
+                </div>
+                <div  id="export-btn-group">
+                    <label style="font-weight: bold; margin-right: 10px; font-size: small;">Export:</label>
+                    <div class="export-buttons">
+                        <button class="export-btn active">DATA</button>
+                    </div>
+                </div>
+            </div>
+
+            
+
+            <!-- LineGraph Section --> 
+            <div id="linegraph-container" style="display: none;">
+            </div>
+
+        </div>  
+        
+        <div id="cards-container">
+            <div id="kpi-container">
+                <div id="kpi-1" class="kpi-card">
+                    <span id="kpi-1-label">Predicted Avg Rice Yield:</span>
+                    <strong id="kpi-1-value">4.5 t/ha</strong>
+                </div>
+                <div id="kpi-2" class="kpi-card">
+                    <span id="kpi-2-label">Predicted Avg Rice Yield:</span>
+                    <strong id="kpi-2-value">4.5 t/ha</strong>
+                </div>
+                <div id="kpi-3" class="kpi-card">
+                    <span id="kpi-3-label">Predicted Avg Rice Yield:</span>
+                    <strong id="kpi-3-value">4.5 t/ha</strong>
+                </div>
+                <div id="kpi-4" class="kpi-card">
+                    <span id="kpi-4-label">Predicted Avg Rice Yield:</span>
+                    <strong id="kpi-4-value">4.5 t/ha</strong>
+                </div>
+            </div>
+            <!-- ACTUAL VS PREDICTED CHART Section --> 
+            <div id="actual-vs-predicted-container" style="display: flex;">
+                <div>
+                    <canvas id="actual-vs-predicted-chart"></canvas>
+                </div>
+            </div>
+            <!-- PIE CHART Section --> 
+            <div id="pie-chart-container" style="display: flex;">
+                <div>
+                    <canvas id="yieldPieChart" width="350" height="350"></canvas>
+                </div>
+            </div>
+            <!-- 
+            
+            actual-vs-predicted
+            
+            --> 
+            
+            <!-- AGGREGATED TREND CHART Section --> 
+            <div id="aggregated-trend-chart-button-container" style="display: none;">
+                <button id="aggregated-trend-chart-button" onclick="window.location.href='/multi_year'">Multi-Line Chart</button>
+            </div>
+
+            <div id="trendchart-container" style="display: none;">
+                <div id="line-chart-container">
+                    <canvas id="laguna-average-yield-line-chart"></canvas>
+                </div>
+            </div>
+            <!-- wet. vs. dry --> 
+            <div id="season-bargraph-container" style="display: none;">
+                <div id="municipality-seasons-bar-chart-container" style="display: none;">
+                    <canvas id="municipality-seasons-bar-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="footer-section">
+        <div class="footer-column">
+            <h4>Connect with Us</h4>
+            <p>
+            <span>AgriKA</span><br>
+            <i class="fas fa-phone"></i> +65 912 123 1234<br>
+            <i class="fas fa-envelope"></i> agrika@gmail.com
+            </p>
+        </div>
+        <div class="footer-column">
+            <h4>Collaborators</h4>
+            <div class="collaborator">
+            <img src="{{ url_for('static', filename='images/Prism.png') }}" alt="PhilRice" class="small-logo">
+            <span class="tooltip">PRiSM</span>
+            </div>
+        </div>
+        </div>
+        <hr>
+        <p class="footer-copy">Copyright © 2025 All Rights Reserved by AgriKA</p>
+    </footer>
+  
+</body>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const municipalitySearch = document.getElementById("municipality-search");
+    const municipalityDropdown = document.getElementById("municipality-dropdown");
+    const sortDropdown = document.getElementById("sort-dropdown");
+    const graphToggleDropdown = document.getElementById("graph-toggle-dropdown");
+    const barChartContainer = document.getElementById("bar-chart-container");
+    const yieldTableContainer = document.getElementById("yield-table-container");
+    const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
+    const municipalities = [
+    "ALAMINOS", "BAY", "CABUYAO", "CALAUAN", "CAVINTI", "BINAN", "CALAMBA",
+    "SANTA ROSA", "FAMY", "KALAYAAN", "LILIW", "LOS BANOS", "LUISIANA",
+    "LUMBAN", "MABITAC", "MAGDALENA", "MAJAYJAY", "NAGCARLAN", "PAETE",
+    "PAGSANJAN", "PAKIL", "PANGIL", "PILA", "RIZAL", "SAN PABLO", "SANTA CRUZ",
+    "SANTA MARIA", "SINILOAN", "VICTORIA"
+    ];
+
+    let originalYieldData = []; 
+    let currentChart = null;
+
+    window.onload = function() {
+        sessionStorage.clear();  // Clear all sessionStorage data
+        console.log("Session Storage Cleared");
+    };
+
+    // zoe changes start
+
+    window.historicalDataGlobal = {{ historical_yield_data | tojson | safe }};
+    console.log("Historical Data (global):", window.historicalDataGlobal);
+    
+    // Ensure historical data is loaded
+    if (window.historicalDataGlobal && window.historicalDataGlobal.length > 0) {
+        renderLagunaAverageYieldChart();
+    } else {
+        console.error("Historical data is not available.");
+    }
+
+    // zoe changes end
+
+    var municipalityClicked = "{{ municipality_clicked }}"; 
+    const params = new URLSearchParams(window.location.search);
+    const activeButton = params.get('active');  // Get the value of the 'active' parameter
+
+    // Toggle the active class based on the parameter value
+    if (activeButton === 'historical') {
+        document.getElementById('historical-btn').classList.add('active');
+        document.getElementById("realtime-content").style.display = "none";
+        document.getElementById("historical-content").style.display = "block";
+        document.getElementById('realtime-btn').classList.remove('active');
+        document.getElementById('season-radio-group').style.display = "flex";
+        document.getElementById('info-bar').style.display = "none";
+        document.getElementById('map-overlay').style.display = "flex";
+
+        document.getElementById('line-chart-container').style.display = "flex";
+        document.getElementById('trendchart-container').style.display = "flex";
+        document.getElementById('year-slider-container').style.display = "flex";
+
+        if (municipalityClicked) {
+            document.getElementById('municipality-search-his').value = municipalityClicked;
+            document.getElementById("linegraph-container").style.display = "flex";
+            document.getElementById("pie-chart-container").style.display = "none";
+            document.getElementById("actual-vs-predicted-container").style.display = "none";
+            document.getElementById("aggregated-trend-chart-button-container").style.display = "flex";
+        
+            document.getElementById("line-chart-container").style.display = "block";
+            document.getElementById("season-bargraph-container").style.display = "flex";
+            document.getElementById("municipality-seasons-bar-chart-container").style.display = "block";
+            
+            setTimeout(() => {
+                updateMunicipalityKPIs(municipalityClicked);
+                renderYieldChart(municipalityClicked);
+                renderMunicipalityYieldBarChart(municipalityClicked);
+            }, 100);  // wait 100 milliseconds
+        }else {
+            // Render chart for Laguna's average yields
+            renderYieldChart();
+        }
+
+
+    } else {
+        document.getElementById('realtime-btn').classList.add('active');
+        document.getElementById('historical-btn').classList.remove('active');
+    }
+
+    //  --- Toggle Real-Time / Historical Content --- //
+    document.getElementById("realtime-btn").addEventListener("click", function () {
+        window.location.href = "http://127.0.0.1:5000/dashboard";
+        document.getElementById("realtime-content").style.display = "block";
+        document.getElementById("historical-content").style.display = "none";
+        this.classList.add("active");
+        document.getElementById("historical-btn").classList.remove("active");
+
+        if (municipalityClicked) {
+            document.getElementById('municipality-search').value = municipalityClicked;
+        }
+
+        // Reset historical section when switching to real-time
+        resetHistoricalSection();
+        updateMap(); //changes ni perl
+        
+        // ZOE CHANGES START 
+        // Call updateRealTimeKPIs to refresh KPIs
+        if (originalYieldData.length > 0) {
+            updateRealTimeKPIs({ municipalities: originalYieldData.map(item => item.municipality), yields: originalYieldData.map(item => item.yield) }, originalYieldData);
+        } else {
+            console.warn("No real-time data available to update KPIs.");
+        }
+
+        // Hide the line chart container
+        document.getElementById('season-radio-group').style.display = "none";
+        document.getElementById('info-bar').style.display = "flex";
+        document.getElementById('map-overlay').style.display = "none";
+      
+        document.getElementById('year-slider-container').style.display = "none";
+        document.getElementById("season-bargraph-container").style.display = "none";
+        document.getElementById("municipality-seasons-bar-chart-container").style.display = "none";
+        document.getElementById("linegraph-container").style.display = "none";
+        document.getElementById("pie-chart-container").style.display = "flex";
+        document.getElementById("actual-vs-predicted-container").style.display = "flex";
+        document.getElementById("aggregated-trend-chart-button-container").style.display = "none";
+        document.getElementById("trendchart-container").style.display = "none";
+        document.getElementById("line-chart-container").style.display = "none";
+        // ZOE CHANGES END 
+
+    });
+
+    document.getElementById("historical-btn").addEventListener("click", () => {
+        HistoricalReload();
+    });
+
+    function HistoricalReload() {
+        document.getElementById("historical-btn").classList.add("active");
+        document.getElementById("realtime-btn").classList.remove("active");
+
+        document.getElementById("realtime-content").style.display = "none";
+        document.getElementById("historical-content").style.display = "block";
+        //this.classList.add("active");
+        //document.getElementById("realtime-btn").classList.remove("active");
+
+        // Reset real-time section when switching to historical
+        resetRealTimeSection();
+
+        updateMap(); //changes ni perl
+
+        // zoe changes 
+        updateHistoricalKPIs(); // Update historical KPIs when switching to historical view
+        // Render the Laguna Average Yield Line Chart
+        
+        // Ensure the line chart container is visible
+        document.getElementById("linegraph-container").style.display = "flex";
+        document.getElementById("pie-chart-container").style.display = "none";
+        document.getElementById("actual-vs-predicted-container").style.display = "none";
+        document.getElementById("aggregated-trend-chart-button-container").style.display = "flex";
+        document.getElementById('season-radio-group').style.display = "flex";
+        document.getElementById('info-bar').style.display = "none";
+        document.getElementById('map-overlay').style.display = "flex";
+       
+        document.getElementById('year-slider-container').style.display = "flex";
+        document.getElementById("trendchart-container").style.display = "flex";
+        document.getElementById("line-chart-container").style.display = "flex";
+
+        // Re-render chart after showing historical content
+        setTimeout(function () {
+            if (typeof myChart !== "undefined") {
+                myChart.resize();
+            }
+            renderLagunaAverageYieldChart();
+
+        }, 100);
+
+    }
+
+    // zoe changes start
+    function updateKPI(labelId, valueId, labelText, valueText) {
+        const labelElement = document.getElementById(labelId);
+        const valueElement = document.getElementById(valueId);
+
+        if (labelElement) {
+            labelElement.textContent = labelText;
+        } else {
+            console.warn(`Label element with ID "${labelId}" not found.`);
+        }
+
+        if (valueElement) {
+            valueElement.textContent = valueText;
+        } else {
+            console.warn(`Value element with ID "${valueId}" not found.`);
+        }
+    }
+    // Function to update historical KPIs based on selected year and season
+    function updateHistoricalKPIs() {
+        // Get selected year and season
+        //const selectedYear = document.getElementById("selected-year").value;
+
+        const selectedYear = document.getElementById("year-dropdown-his").value;
+        let selectedSeason = document.getElementById("season-dropdown-his").value;
+
+        // Normalize season values (e.g., "season1" -> "1")
+        if (selectedSeason.toLowerCase() === "season1") selectedSeason = "1";
+        if (selectedSeason.toLowerCase() === "season2") selectedSeason = "2";
+
+        // Filter historical data based on selected year and season
+        const filteredData = window.historicalDataGlobal.filter(item => {
+            return (!selectedYear || item.year == selectedYear) &&
+                (!selectedSeason || item.season == selectedSeason);
+        });
+
+        // If no data is available, reset KPIs and stop execution
+        if (filteredData.length === 0) {
+            updateKPI("kpi-3-label", "kpi-3-value", "Avg Rice Yield for whole Laguna:", "No Data");
+            updateKPI("kpi-1-label", "kpi-1-value", "Top Performing Municipality:", "No Data");
+            updateKPI("kpi-2-label", "kpi-2-value", "Lowest Performing Municipality:", "No Data");
+            updateKPI("kpi-4-label", "kpi-4-value", "Municipalities Below Avg Rice Yield:", "No Data");
+            return;
+        }
+
+        // Calculate the average yield
+        const totalYield = filteredData.reduce((sum, item) => sum + item.yield, 0);
+        const avgYield = totalYield / filteredData.length;
+
+        // Find the top municipality
+        const maxYield = Math.max(...filteredData.map(item => item.yield));
+        const topMunicipality = filteredData.find(item => item.yield === maxYield)?.municipality || "N/A";
+
+        // Find the lowest municipality
+        const sortedYields = [...filteredData].sort((a, b) => a.yield - b.yield); // Sort by yield ascending
+        let lowestMunicipality = sortedYields[0]?.municipality || "N/A";
+
+        // If the lowest municipality is "San Pedro", get the second lowest
+        if (lowestMunicipality.toUpperCase() === "SAN PEDRO" && sortedYields.length > 1) {
+            lowestMunicipality = sortedYields[1]?.municipality || "N/A";
+        }
+
+        // Count municipalities below the average yield
+        const belowAverageCount = filteredData.filter(item => item.yield < avgYield).length;
+
+        // Update the KPI elements
+        updateKPI("kpi-3-label", "kpi-3-value", "Avg Rice Yield:", `${avgYield.toFixed(2)} t/ha`);
+        updateKPI("kpi-1-label", "kpi-1-value", "Top Performing Municipality:", topMunicipality);
+        updateKPI("kpi-2-label", "kpi-2-value", "Lowest Performing Municipality:", lowestMunicipality);
+        updateKPI("kpi-4-label", "kpi-4-value", "Municipalities Below Avg Rice Yield:", belowAverageCount);
+    }
+
+    function updateMunicipalityKPIs(selectedMunicipality) {
+        updateKPI("kpi-1-label", "kpi-1-value", "Avg Municipality Rice Yield:", "");
+        updateKPI("kpi-2-label", "kpi-2-value", "Laguna Yield Rank:", "");
+        updateKPI("kpi-3-label", "kpi-3-value", "% Above Laguna Avg:", "");
+        updateKPI("kpi-4-label", "kpi-4-value", "% Change vs. Previous Season:", "");
+
+        // Filter data for the selected municipality
+        const municipalityData = window.historicalDataGlobal.filter(item => item.municipality.toUpperCase() === selectedMunicipality.toUpperCase());
+        console.log("Selected Municipality:", selectedMunicipality);
+        console.log("Filtered Municipality Data:", municipalityData);
+        
+        // If no data is available for the selected municipality, reset KPIs and stop execution
+        if (municipalityData.length === 0) {
+            updateKPI("kpi-1-label", "kpi-1-value", "Avg Municipality Rice Yield:", "No Data");
+            updateKPI("kpi-2-label", "kpi-2-value", "Laguna Yield Rank:", "No Data");
+            updateKPI("kpi-3-label", "kpi-3-value", "% Above Laguna Avg:", "No Data");
+            updateKPI("kpi-4-label", "kpi-4-value", "% Change vs. Previous Season:", "No Data");
+            return;
+        }
+
+        // Calculate the average yield for the selected municipality
+        const totalMunicipalityYield = municipalityData.reduce((sum, item) => sum + item.yield, 0);
+        const avgMunicipalityYield = totalMunicipalityYield / municipalityData.length;
+
+        // Calculate the average yield for Laguna
+        const totalLagunaYield = window.historicalDataGlobal.reduce((sum, item) => sum + item.yield, 0);
+        const avgLagunaYield = totalLagunaYield / window.historicalDataGlobal.length;
+
+        // Determine the rank of the municipality's average yield in Laguna
+        const lagunaYields = [...new Set(window.historicalDataGlobal.map(item => item.municipality))].map(municipality => {
+            const municipalityYields = window.historicalDataGlobal.filter(item => item.municipality === municipality);
+            const totalYield = municipalityYields.reduce((sum, item) => sum + item.yield, 0);
+            return { municipality, avgYield: totalYield / municipalityYields.length };
+        }).sort((a, b) => b.avgYield - a.avgYield);
+
+        const municipalityRank = lagunaYields.findIndex(item => item.municipality.toUpperCase() === selectedMunicipality.toUpperCase()) + 1;
+
+        // Calculate the percentage above Laguna's average yield
+        const percentAboveLagunaAvg = ((avgMunicipalityYield - avgLagunaYield) / avgLagunaYield) * 100;
+
+        // Calculate the percentage change vs. the previous season
+        const sortedMunicipalityData = municipalityData.sort((a, b) => a.year - b.year || a.season - b.season);
+        let percentChange = "No Data";
+        if (sortedMunicipalityData.length > 1) {
+            const lastSeasonYield = sortedMunicipalityData[sortedMunicipalityData.length - 2].yield;
+            const currentSeasonYield = sortedMunicipalityData[sortedMunicipalityData.length - 1].yield;
+            percentChange = ((currentSeasonYield - lastSeasonYield) / lastSeasonYield) * 100;
+        }
+
+        console.log("Avg Municipality Rice Yield:", avgMunicipalityYield);
+        console.log("Laguna Yield Rank:", municipalityRank);
+        console.log("% Above Laguna Avg:", percentAboveLagunaAvg);
+        console.log("% Change vs. Previous Season:", percentChange);
+
+        // Update the KPI elements
+        updateKPI("kpi-1-label", "kpi-1-value", "Avg Municipality Rice Yield:", `${avgMunicipalityYield.toFixed(2)} t/ha`);
+        updateKPI("kpi-2-label", "kpi-2-value", "Laguna Yield Rank:", `${getOrdinalSuffix(municipalityRank)} of ${lagunaYields.length}`);
+        updateKPI("kpi-3-label", "kpi-3-value", "% Above Laguna Avg:", `${percentAboveLagunaAvg.toFixed(2)}%`);
+        updateKPI("kpi-4-label", "kpi-4-value", "% Change vs. Previous Season:", `${percentChange === "No Data" ? percentChange : percentChange.toFixed(2) + "%"}`);
+    }
+
+    function getOrdinalSuffix(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    // zoe changes end
+
+    //  --- Resets Real-Time / Historical Content --- //
+    function resetRealTimeSection() {
+        clearSearch();
+    }
+
+    function resetHistoricalSection() {
+        clearHistoricalSearch();
+    }
+
+    // --- Search Bar for Real Time --- //
+    document.getElementById("municipality-search").addEventListener("click", function() {
+        showDropdown(); // Show all municipalities when clicked
+    });
+
+    document.getElementById("municipality-search").addEventListener("input", function() {
+        let clearBtn = document.getElementById("clear-search");
+        clearBtn.style.display = this.value.length > 0 ? "block" : "none";
+        filterDropdown(); // ✅ Update dropdown while typing
+    });
+
+
+    function showDropdown() {
+        let dropdown = document.getElementById("municipality-dropdown");
+        dropdown.style.display = "block"; 
+        populateDropdown(municipalities); // Show all municipalities
+    }
+
+    function filterDropdown() {
+        let input = document.getElementById("municipality-search");
+        let clearBtn = document.getElementById("clear-search");
+
+        // Show x when input has text
+        clearBtn.style.display = input.value.length > 0 ? "block" : "none";
+
+        // Filter municipalities but DO NOT update chart/table here
+        let filteredMunicipalities = municipalities.filter(m => 
+            m.toUpperCase().includes(input.value.toUpperCase())
+        );
+
+        populateDropdown(filteredMunicipalities); 
+    }
+
+
+    function clearSearch() {
+        let input = document.getElementById("municipality-search");
+        let clearBtn = document.getElementById("clear-search");
+        let sortDropdown = document.getElementById("sort-dropdown");
+
+        // Clear input field
+        input.value = "";
+        // Hide x button
+        clearBtn.style.display = "none";
+        // Show sort dropdown again when clearing selection
+        if (sortDropdown) {
+            sortDropdown.style.display = "block";
+        }
+        // Hide dropdown
+        document.getElementById("municipality-dropdown").style.display = "none";
+        // Reset graph & table
+        updateRealTimeGraph(
+            originalYieldData.map(item => item.municipality),
+            originalYieldData.map(item => item.yield)
+        );
+        updateRealTimeTable(originalYieldData);
+        
+
+    }
+
+
+    document.getElementById("clear-search").addEventListener("click", clearSearch);
+
+     // Function to hide dropdown
+     function hiderealDropdown() {
+        let dropdown = document.getElementById("municipality-dropdown");
+        if (dropdown) {
+            dropdown.style.display = "none"; 
+    }
+    }
+
+    // Hide dropdown when scrolling anywhere on the page
+    window.addEventListener("scroll", hiderealDropdown);
+
+    // Hide dropdown when interacting with historical sections
+    ["bar-chart-container", "yield-table-container"].forEach(id => {
+        let element = document.getElementById(id);
+        if (element) {
+            element.addEventListener("wheel", hiderealDropdown); 
+        }
+    });
+
+    // Track highlighted item
+    let highlightedIndex = -1; 
+
+    document.getElementById("municipality-search").addEventListener("keydown", function(event) {
+        let items = document.querySelectorAll(".dropdown-item-real");
+        let inputText = this.value.trim().toLowerCase();
+
+        if (event.key === "Enter") {
+            event.preventDefault();
+
+            // If an item is highlighted, select it
+            if (highlightedIndex >= 0) {
+                selectOption(items[highlightedIndex].textContent);
+                return;
+            }
+
+            // If no item is highlighted, check if input is an exact match
+            let exactMatch = municipalities.find(m => m.toLowerCase() === inputText);
+            if (exactMatch) {
+                selectOption(exactMatch)
+            }
+        }
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            highlightedIndex = (highlightedIndex + 1) % items.length;
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+        }
+
+        // Remove previous highlights
+        items.forEach(item => item.classList.remove("highlighted"));
+
+        // Highlight the current selection
+        if (highlightedIndex >= 0) {
+            items[highlightedIndex].classList.add("highlighted");
+            items[highlightedIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+    });
+
+
+    function populateDropdown(items) {
+        let dropdown = document.getElementById("municipality-dropdown");
+        dropdown.innerHTML = ""; 
+        highlightedIndex = -1; 
+
+        if (items.length === 0) {
+            dropdown.innerHTML = `<div class="dropdown-item dropdown-no-results">No results found</div>`;
+            return;
+        }
+
+        items.forEach((m, index) => {
+            let option = document.createElement("div");
+            option.className = "dropdown-item dropdown-item-real"; 
+            option.textContent = m;
+            option.dataset.index = index;
+
+            option.onclick = function () {
+                selectOption(m);
+            };
+
+            dropdown.appendChild(option);
+        });
+    }
+
+    function selectOption(municipality) {
+        let searchInput = document.getElementById("municipality-search");
+        let dropdown = document.getElementById("municipality-dropdown");
+        let clearBtn = document.getElementById("clear-search");
+        let sortDropdown = document.getElementById("sort-dropdown");
+
+        // Set input value to the selected municipality
+        searchInput.value = municipality;
+
+        // Show the x button
+        clearBtn.style.display = "block";
+
+        // Hide dropdown
+        dropdown.style.display = "none";
+
+        // Hide sort dropdown when a municipality is selected
+        if (sortDropdown) {
+            sortDropdown.style.display = "none";
+        }
+
+        // NOW we update the chart and table ONLY after selection
+        let filteredData = originalYieldData.filter(item => item.municipality === municipality);
+        updateRealTimeGraph(
+            filteredData.map(item => item.municipality),
+            filteredData.map(item => item.yield)
+        );
+        updateRealTimeTable(filteredData);
+        
+    }
+
+
+    //  Close dropdown when clicking outside
+    document.addEventListener("click", function(event) {
+        let dropdown = document.getElementById("municipality-dropdown");
+        let searchInput = document.getElementById("municipality-search");
+
+        if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = "none"; 
+        }
+    });
+
+    // --- End Search Bar --- //
+
+
+    function fetchRealTimeData() {
+        fetch('/get_real_time_data')
+            fetch('/get_real_time_data')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.municipalities || !data.yields) {
+                    console.error("Error: Missing 'municipalities' or 'yields' in response", data);
+                    return;
+                }
+
+                // Map the data into an array of objects
+                originalYieldData = data.municipalities.map((municipality, index) => ({
+                    municipality: municipality,
+                    yield: data.yields[index]
+                }));
+
+                // Update the table and graph
+                updateRealTimeTable(originalYieldData);
+                updateRealTimeGraph(data.municipalities, data.yields);
+
+                // ZOE CHANGES START HERE
+                
+                updateRealTimeKPIs(data, originalYieldData); // Update KPIs with data
+                
+                // ZOE CHANGES END HERE
+
+                updatePieChart(originalYieldData);
+
+            })
+            .catch(error => console.error("Error fetching real-time data:", error));
+    }
+
+    function updateRealTimeKPIs(data, originalYieldData){
+        // Calculate the average yield
+        const totalYield = data.yields.reduce((sum, yieldValue) => sum + yieldValue, 0);
+        const avgYield = (data.yields.length > 0) ? (totalYield / data.yields.length) : 0;
+
+        // Update kpi-1 element
+        updateKPI("kpi-3-label", "kpi-3-value", "Predicted Avg Rice Yield:", `${avgYield.toFixed(2)} t/ha`);
+
+        // Find the top municipality
+        const maxYieldIndex = data.yields.indexOf(Math.max(...data.yields));
+        const topMunicipality = data.municipalities[maxYieldIndex];
+
+        // Update kpi-2 element
+        updateKPI("kpi-1-label", "kpi-1-value", "Top Performing Municipality:", topMunicipality);
+
+        // Find the lowest municipality
+        const minYieldIndex = data.yields.indexOf(Math.min(...data.yields));
+        const lowestMunicipality = data.municipalities[minYieldIndex];
+
+        // Update kpi-3 element
+        updateKPI("kpi-2-label", "kpi-2-value", "Lowest Performing Municipality:", lowestMunicipality);
+
+        // Find municipalities performing below average
+        const belowAverageCount = originalYieldData.filter(item => item.yield < avgYield).length;
+
+        // Update kpi-4 element
+        updateKPI("kpi-4-label", "kpi-4-value", "Municipalities Below Avg Rice Yield:", belowAverageCount);
+    }
+
+    function updateRealTimeTable(yieldData) {
+        tableBody.innerHTML = "";
+        yieldData.forEach(entry => {
+            let row = `<tr>
+                <td>${entry.municipality}</td>
+                <td>${entry.yield}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    function updateRealTimeGraph(municipalities, yields) {
+        let ctx = document.getElementById("bar-chart").getContext("2d");
+        let container = document.getElementById("bar-chart-container");
+
+        if (window.realTimeChart) {
+            window.realTimeChart.destroy();
+        }
+
+        let isFiltered = municipalities.length < originalYieldData.length; 
+        let chartTitle = "Real Time Rice Yield Data";
+
+        // If no selection is made, show all data
+        //if (!isFiltered || municipalities.length === 0) {
+        //    municipalities = originalYieldData.map(d => d.municipality);
+        //    yields = originalYieldData.map(d => d.yield);
+        //}
+
+        
+        let minHeight = 400; 
+        let barHeight = 30; 
+        let chartHeight = Math.max(minHeight, municipalities.length * barHeight);
+
+        container.style.height = `${chartHeight}px`;
+
+        window.realTimeChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: municipalities,
+                datasets: [{
+                    label: "Real-Time Yield (t/ha)",
+                    data: yields,
+                    backgroundColor: yields.map(y => {
+                        let val = parseFloat(y);
+                        return val < 0.75 ? "#d13237" : val < 1.5 ? "#ffc91f" : val < 2.25 ? "#69a436" : "#1b499f";
+                    }),
+                    borderRadius: 20,
+                    borderWidth: 0,
+                    barThickness: 15,  
+                    categoryPercentage: 0.6,
+                    barPercentage: 0.8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: { 
+                        beginAtZero: true,
+                        grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                        ticks: { maxRotation: 0, autoSkip: true, font: { size: 12, weight: "bold" } }
+                    },
+                    y: { 
+                        ticks: { autoSkip: false, font: { size: 14, weight: "bold" } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                    display: true,
+                    text: chartTitle,
+                    font: { size: 16, weight: "bold" }
+                },
+                    tooltip: {
+                        backgroundColor: "#fff",
+                        titleColor: "#000",
+                        bodyColor: "#333",
+                        borderColor: "#ddd",
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 10
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: "easeInOutQuart"
+                }
+            }
+        });
+
+        console.log("New Chart Created!");
+
+        // Auto-scroll to top when selection changes
+        setTimeout(() => {
+            container.scrollTop = 0;
+        }, 300);
+    }
+
+    document.getElementById("municipality-search").addEventListener("input", function () {
+        filterDropdown(); 
+
+        if (this.value.trim() === "") {  
+            clearSearch();
+            showDropdown(); 
+        }
+    });
+
+
+
+    sortDropdown?.addEventListener("change", function () {
+        let sortedData = [...originalYieldData];
+        if (this.value === "asc") {
+            sortedData.sort((a, b) => parseFloat(a.yield) - parseFloat(b.yield));
+        } else if (this.value === "desc") {
+            sortedData.sort((a, b) => parseFloat(b.yield) - parseFloat(a.yield));
+        }
+        console.log("\n\n\n\nSorted Data:", sortedData);
+        updateRealTimeTable(sortedData);
+        updateRealTimeGraph(
+            sortedData.map(item => item.municipality),
+            sortedData.map(item => item.yield)
+        );
+    });
+
+    graphToggleDropdown?.addEventListener("change", function () {
+        barChartContainer.style.display = this.value === "bar" ? "block" : "none";
+        yieldTableContainer.style.display = this.value === "table" ? "block" : "none";
+    });
+
+    //setInterval(fetchRealTimeData, 30000);
+    fetchRealTimeData();
+
+    // --- HISTORICAL CONTENTS --- //
+
+   
+
+    function clearHistoricalSearch() {
+        let inputField = document.getElementById("municipality-search-his"); 
+        let dropdownContainer = document.getElementById("municipality-dropdown-his");
+        let clearButton = document.getElementById("clear-search-his"); 
+
+        // Clear input field
+        if (inputField) inputField.value = "";
+
+        // Clear and hide the dropdown
+        if (dropdownContainer) {
+            dropdownContainer.innerHTML = "";
+            dropdownContainer.style.display = "none";
+        }
+
+        // Hide the clear x button
+        if (clearButton) clearButton.style.display = "none";
+
+        // Reset historical view 
+        updateHistoricalView();
+        
+    }
+
+    // --- START OF SEARCH BAR HISTO --- //
+    // Get elements
+    const inputField = document.getElementById("municipality-search-his");
+    const clearButton = document.getElementById("clear-search-his");
+    // Create a fixed wrapper for the dropdown
+    const dropdownWrapper = document.createElement("div");
+    dropdownWrapper.classList.add("fixed-dropdown-wrapper");
+    document.body.appendChild(dropdownWrapper);
+    // Create dropdown container
+    const dropdownContainer = document.createElement("div");
+    dropdownContainer.id = "municipality-dropdown-his";
+    dropdownContainer.classList.add("dropdown-list");
+    dropdownWrapper.appendChild(dropdownContainer);
+
+    let selectedIndex = -1;
+    let filteredMunicipalities = [];
+
+    // Position dropdown below the search bar
+    function positionDropdown() {
+        let rect = inputField.getBoundingClientRect();
+        dropdownContainer.style.top = `${rect.bottom}px`;
+        dropdownContainer.style.left = `${rect.left}px`;
+        dropdownContainer.style.width = `${rect.width}px`;
+        dropdownContainer.style.display = "block";
+    }
+
+    // Show dropdown on focus or click
+    inputField?.addEventListener("focus", () => {
+        showMunicipalityDropdown(inputField.value.trim());
+        clearButton.style.display = inputField.value.trim() ? "block" : "none";
+        positionDropdown();
+    });
+
+    inputField.addEventListener("click", function () {
+        showMunicipalityDropdown("");
+        positionDropdown();
+    });
+
+    // Handle input changes
+    inputField.addEventListener("input", function () {
+        let trimmedValue = inputField.value.trim();
+        showMunicipalityDropdown(trimmedValue);
+
+        if (trimmedValue) {
+            clearButton.style.display = "block";
+        } else {
+            clearButton.style.display = "none";
+            dropdownContainer.style.display = "none";
+            updateHistoricalView(); 
+            showMunicipalityDropdown();
+        }
+    });
+
+
+    // Adjust dropdown position on window resize
+    window.addEventListener("resize", () => {
+        if (dropdownContainer.style.display === "block") positionDropdown();
+    });
+
+    // Show matching municipalities in dropdown
+    function showMunicipalityDropdown(inputText = "") {
+        dropdownContainer.innerHTML = "";
+        selectedIndex = -1;
+        let trimmedText = inputText.trim().toLowerCase();
+
+        filteredMunicipalities = trimmedText
+            ? municipalities.filter(m => m.toLowerCase().startsWith(trimmedText))
+            : [...municipalities];
+
+        // 
+        if (filteredMunicipalities.length === 0) {
+            dropdownContainer.innerHTML = `<div class="dropdown-item-his dropdown-no-results">No results found</div>`;
+            dropdownContainer.style.display = "block"; 
+            return;
+        }
+
+        positionDropdown();
+        dropdownContainer.style.maxHeight = "200px";
+        dropdownContainer.style.overflowY = "auto";
+
+        filteredMunicipalities.forEach((municipality, index) => {
+            let option = document.createElement("div");
+            option.classList.add("dropdown-item-his");
+            option.textContent = municipality;
+            option.dataset.index = index;
+            option.addEventListener("click", () => selectMunicipality(index));
+            dropdownContainer.appendChild(option);
+        });
+    }
+
+
+    // Select municipality from dropdown
+    function selectMunicipality(index) {
+        if (index >= 0 && index < filteredMunicipalities.length) {
+            inputField.value = filteredMunicipalities[index];
+            dropdownContainer.style.display = "none";
+            clearButton.style.display = "block";
+
+            // zoe changes
+            
+            updateHistoricalView();
+
+            selectedMunicipality = filteredMunicipalities[index]; // Get the selected municipality
+
+            if (selectedMunicipality) {
+                // Call updateMunicipalityKPIs to update the KPIs
+                updateMunicipalityKPIs(selectedMunicipality);
+                // Render chart for the selected municipality
+                renderYieldChart(selectedMunicipality);
+                // Show the bar chart container
+                document.getElementById("season-bargraph-container").style.display = "flex";
+                document.getElementById("municipality-seasons-bar-chart-container").style.display = "block";
+                renderMunicipalityYieldBarChart(selectedMunicipality);
+            } else {
+                // Render chart for Laguna's average yields
+                renderYieldChart();
+            }
+        }
+    }
+
+    // Handle keyboard navigation
+    inputField.addEventListener("keydown", function (event) {
+        let items = document.querySelectorAll(".dropdown-item-his");
+        if (items.length === 0) return;
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+        } else if (event.key === "Enter") {
+            event.preventDefault();
+            if (selectedIndex >= 0) {
+                selectMunicipality(selectedIndex);
+            } else {
+                let typedMunicipality = inputField.value.trim();
+                let matchedIndex = filteredMunicipalities.findIndex(m => m.toLowerCase() === typedMunicipality.toLowerCase());
+                if (matchedIndex !== -1) selectMunicipality(matchedIndex);
+            }
+            return;
+        }
+
+        items.forEach(item => item.classList.remove("highlighted"));
+        if (selectedIndex >= 0) {
+            items[selectedIndex].classList.add("highlighted");
+            items[selectedIndex].scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+    });
+
+    // Show clear button when selecting a municipality from dropdown
+    document.addEventListener("click", (event) => {
+        if (event.target.classList.contains("dropdown-item-his")) {
+            clearButton.style.display = "block";
+        }
+    });
+
+    // Clear search field and reset view
+    clearButton.addEventListener("click", function () {
+        inputField.value = "";
+        clearButton.style.display = "none";
+        dropdownContainer.style.display = "none";
+        updateHistoricalView();
+        renderYieldChart(); // zoe change: Render chart for Laguna's average yields 
+        // Hide the bar chart container
+        document.getElementById("season-bargraph-container").style.display = "none";
+        document.getElementById("municipality-seasons-bar-chart-container").style.display = "none";
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", event => {
+        if (!inputField.contains(event.target) && !dropdownContainer.contains(event.target)) {
+            dropdownContainer.style.display = "none";
+        }
+    });
+
+    // Hide dropdown on scroll
+    window.addEventListener("scroll", () => dropdownContainer.style.display = "none");
+
+    // Hide dropdown when interacting with specific sections
+    ["historical-bar-chart-container", "yield-table-container-his"].forEach(id => {
+        let element = document.getElementById(id);
+        if (element) {
+            element.addEventListener("wheel", () => dropdownContainer.style.display = "none");
+        }
+    });
+
+    // --- END OF SEARCH BAR HISTO --- //
+
+
+    // --- CHART AND TABLE --- //
+    // Function to update historical chart
+    // Update ni chan
+    function updateHistoricalChart(data, chartTitle, selectedMunicipality = "") {
+        let canvas = document.getElementById("historical-bar-chart");
+        if (!canvas) return;
+
+        if (window.historicalChartInstance) {
+            window.historicalChartInstance.destroy();
+        }
+
+        // ✅ Filter out entries where yield is 0 or null/undefined
+        const filteredData = data.filter(item => parseFloat(item.yield) > 0);
+
+        canvas.height = Math.max(50, filteredData.length * 40);
+
+        let ctx = canvas.getContext("2d");
+
+        window.historicalChartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: filteredData.map(item => {
+                    const seasonName = item.season == "1" ? "Wet Season" : "Dry Season";
+                    return selectedMunicipality && municipalities.includes(selectedMunicipality)
+                        ? `${item.year}, ${seasonName}`
+                        : `${item.municipality}`;
+                }),
+                datasets: [{
+                    label: "Historical Rice Yield (t/ha)",
+                    data: filteredData.map(item => item.yield),
+                    backgroundColor: filteredData.map(item => {
+                        let y = parseFloat(item.yield);
+                        return y < 3 ? "#d13237" : y < 4 ? "#ffc91f" : y < 5 ? "#69a436" : "#1b499f";
+                    }),
+                    borderWidth: 0,
+                    borderRadius: 20,
+                    barThickness: 15,
+                    categoryPercentage: 1.0,
+                    barPercentage: 1.0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false }
+                    },
+                    y: {
+                        ticks: {
+                            autoSkip: false,
+                            font: { size: 14, weight: "bold" }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: chartTitle,
+                        font: { size: 16, weight: "bold" }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: (tooltipItems) => tooltipItems[0].label,
+                            label: (tooltipItem) => `Yield: ${tooltipItem.raw} t/ha`
+                        },
+                        backgroundColor: "#fff",
+                        titleColor: "#000",
+                        bodyColor: "#333",
+                        borderColor: "#ddd",
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 10
+                    }
+                },
+                animation: { duration: 1000, easing: "easeInOutQuart" }
+            }
+        });
+    }
+
+
+
+    // Function to update historical table
+    // Update ni chan
+    function updateHistoricalTable(data, selectedMunicipality = "") {
+    let tbody = document.getElementById("historical-table-body-his");
+    if (!tbody) return;
+
+    const hideMunicipalityColumn = selectedMunicipality && municipalities.includes(selectedMunicipality);
+
+    // Set table headers 
+    const headerRow = document.querySelector("#data-table-his thead tr");
+    if (headerRow) {
+        headerRow.innerHTML = `
+            ${!hideMunicipalityColumn ? "<th>Municipality</th>" : ""}
+            <th>Year</th>
+            <th>Season</th>
+            <th>Average Yield (t/ha)</th>
+        `;
+    }
+
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${hideMunicipalityColumn ? 3 : 4}">No Data</td></tr>`;
+    } else {
+        tbody.innerHTML = data.map(item => {
+        const season = `${item.season}`.trim();
+            const seasonLabel = season === "1" ? "Wet Season" :
+                                season === "2" ? "Dry Season" :
+                                season;
+            return `
+                <tr>
+                    ${!hideMunicipalityColumn ? `<td>${item.municipality}</td>` : ""}
+                    <td>${item.year}</td>
+                    <td>${seasonLabel}</td>
+                    <td>${item.yield === 0 ? "No Data" : item.yield}</td>
+                </tr>`;
+        }).join('');
+    }
+}
+
+
+
+
+    // Function to update view
+    // Update ni chan
+    function updateHistoricalView() {
+        let selectedMunicipality = inputField?.value.trim().toUpperCase() || "";
+        const hideMunicipalityColumn = selectedMunicipality &&
+        municipalities.map(m => m.toUpperCase()).includes(selectedMunicipality);
+        let selectedYear = document.getElementById("year-dropdown-his")?.value || "";
+        let selectedSeason = document.getElementById("season-dropdown-his")?.value || "";
+        let data = window.historicalDataGlobal;
+
+        let dropdown = document.getElementById("season-dropdown-his");
+        let selectedSeasonText = dropdown?.options[dropdown.selectedIndex]?.text || "";
+
+        if (selectedSeason.toLowerCase() === "season1") {
+            selectedSeason = "1";
+        } else if (selectedSeason.toLowerCase() === "season2") {
+            selectedSeason = "2";
+        }
+
+        if (selectedMunicipality && municipalities.includes(selectedMunicipality)) {
+            data = data.filter(item => item.municipality.toUpperCase() === selectedMunicipality);
+
+            document.getElementById("year-dropdown-his").style.display = "none";
+            document.getElementById("season-dropdown-his").style.display = "none";
+        } else {
+            document.getElementById("year-dropdown-his").style.display = "block";
+            document.getElementById("season-dropdown-his").style.display = "block";
+
+            data = window.historicalDataGlobal.filter(item => 
+                (!selectedYear || item.year == selectedYear) && 
+                (!selectedSeason || item.season == selectedSeason)
+            );
+        }
+
+        document.getElementById("graph-toggle-dropdown-his").style.display = "block";
+        document.getElementById("sort-dropdown-his").style.display = "block";
+
+        // If no data exists, show "No Data Available" and stop execution
+        if (data.length === 0) {
+            document.getElementById("historical-table-body-his").innerHTML =
+                "<tr><td colspan='3'>No Data Available</td></tr>";
+
+            document.getElementById("historical-bar-chart-container").style.display = "none";
+            document.getElementById("yield-table-container-his").style.display = "block";
+
+            // Show table title even if no data
+            const tableTitle = document.getElementById("historical-table-title");
+            tableTitle.style.display = "block";
+            tableTitle.textContent =
+                selectedMunicipality && municipalities.includes(selectedMunicipality)
+                    ? `Historical Rice Yield for ${selectedMunicipality}`
+                    : "Historical Rice Yield";
+
+            return;
+        }
+
+        let sortOrder = document.getElementById("sort-dropdown-his")?.value;
+
+        if (sortOrder === "yield-asc") {
+            data.sort((a, b) => parseFloat(a.yield) - parseFloat(b.yield));
+        } else if (sortOrder === "yield-desc") {
+            data.sort((a, b) => parseFloat(b.yield) - parseFloat(a.yield));
+        } else if (sortOrder === "year-asc") {
+            data.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+        } else if (sortOrder === "year-desc") {
+            data.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+        }
+
+
+        // Update ni Chan
+        let toggleValue = document.getElementById("graph-toggle-dropdown-his")?.value;
+        if (toggleValue === "bar") {
+            document.getElementById("historical-bar-chart-container").style.display = "block";
+            document.getElementById("yield-table-container-his").style.display = "none";
+            
+            let chartTitle = `Historical Rice Yield for ${selectedSeasonText} of ${selectedYear}`;
+            if (selectedMunicipality && municipalities.includes(selectedMunicipality)) 
+            {
+                chartTitle = `Historical Rice Yield for ${selectedMunicipality}`;
+            }
+            updateHistoricalChart(data, chartTitle, selectedMunicipality);
+        } else {
+            document.getElementById("historical-bar-chart-container").style.display = "none";
+            document.getElementById("yield-table-container-his").style.display = "block";
+
+            // ✅ Add table title before rendering table
+            const tableTitle = document.getElementById("historical-table-title");
+            tableTitle.style.display = "block";
+            tableTitle.textContent =
+                selectedMunicipality && municipalities.includes(selectedMunicipality)
+                    ? `Historical Rice Yield Table for ${selectedMunicipality}`
+                    : `Historical Rice Yield for ${selectedSeasonText} of ${selectedYear}`;
+
+            updateHistoricalTable(data, selectedMunicipality);
+        }
+        updateMap();
+        updateHistoricalKPIs();
+    }
+
+
+    document.getElementById("year-dropdown-his")?.addEventListener("change", updateHistoricalView);
+    document.getElementById("season-dropdown-his")?.addEventListener("change", updateHistoricalView);
+    document.getElementById("graph-toggle-dropdown-his")?.addEventListener("change", updateHistoricalView);
+    document.getElementById("sort-dropdown-his")?.addEventListener("change", updateHistoricalView);
+
+    document.getElementById("year-slider")?.addEventListener("input", updateHistoricalView);
+    document.querySelectorAll('input[name="season"]').forEach(radio => {
+        radio.addEventListener("change", updateHistoricalView);
+    });
+
+
+
+    // Initialize view on load
+    updateHistoricalView();
+
+    // --- LEGEND ITEMS --- //
+    const legendContainer = document.getElementById("legend-container");
+    const realtimeBtn = document.getElementById("realtime-btn");
+    const historicalBtn = document.getElementById("historical-btn");
+
+    const historicalLegend = [
+        { color: "#d13237", label: "< 3" },
+        { color: "#ffc91f", label: "3 - 4" },
+        { color: "#69a436", label: "4 - 5" },
+        { color: "#1b499f", label: "> 5" }
+    ];
+
+    const realtimeLegend = [
+        { color: "#d13237", label: "< 0.75" },
+        { color: "#ffc91f", label: "0.75 - 1.5" },
+        { color: "#69a436", label: "1.5 - 2.25" },
+        { color: "#1b499f", label: "> 2.25" }
+    ];
+
+    function updateLegend(legendData) {
+        legendContainer.innerHTML = ""; // Clear existing legend
+
+        const legendTitle = document.createElement("div");
+        legendTitle.classList.add("legend-item");
+        //legendTitle.textContent = "Avg. Yield (t/ha):";
+        legendContainer.appendChild(legendTitle);
+
+        legendData.forEach(item => {
+            const legendItem = document.createElement("div");
+            legendItem.classList.add("legend-item");
+
+            const legendBox = document.createElement("div");
+            legendBox.classList.add("legend-box");
+            legendBox.style.backgroundColor = item.color;
+
+            const legendLabel = document.createElement("span");
+            legendLabel.textContent = item.label;
+
+            legendItem.appendChild(legendBox);
+            legendItem.appendChild(legendLabel);
+            legendContainer.appendChild(legendItem);
+        });
+    }
+
+    // Default to Real-Time legend
+    updateLegend(realtimeLegend);
+
+    realtimeBtn.addEventListener("click", function () {
+        updateLegend(realtimeLegend);
+        realtimeBtn.classList.add("active");
+        historicalBtn.classList.remove("active");
+    });
+
+    historicalBtn.addEventListener("click", function () {
+        updateLegend(historicalLegend);
+        historicalBtn.classList.add("active");
+        realtimeBtn.classList.remove("active");
+    });
+
+    //changes ni perl start
+    const mapFrame = document.getElementById("map-frame");
+    const yearDropdown = document.getElementById("year-dropdown-his");
+    const seasonDropdown = document.getElementById("season-dropdown-his");
+
+
+    function updateMap() {
+        let mapFrame = document.getElementById("map-frame");
+        if (!mapFrame) {
+            console.error("map-frame not found!");
+            return;
+        }
+        
+        let activeTab = document.querySelector(".hist-toggle-btn.active")?.id; // Ensure it exists
+        let municipalityInput = document.getElementById("municipality-search-his").value.trim()
+        
+
+        console.log("Active tab:", activeTab); // Debugging
+        console.log("Municipality search:", municipalityInput); // Debugging
+
+        // 📌 1️⃣ Prioritize Municipality Search First
+        if (municipalityInput) {
+            let formattedMunicipality = municipalityInput.replace(/\s+/g, "_").toLowerCase();
+            mapFrame.src = `/static/map_${formattedMunicipality}.html`;
+            console.log("Updated map src:", mapFrame.src); // Debugging
+            return; // Stop function here if municipality is selected
+
+            //disableYearAndSeasonControls()
+
+            ///slider and radio disabled
+        }
+
+        
+        // 📌 2️⃣ Handle Realtime & Historical Toggle Logic
+        if (activeTab === "realtime-btn") {
+            console.clear();  // Clears the browser console
+            console.log("🔄 Realtime tab is active. Console refreshed.");
+            //tanggal nasa console
+            if (municipalityClicked) {
+                document.getElementById('municipality-search').value = municipalityClicked;
+            }
+
+            let municipalityInput1 = document.getElementById("municipality-search").value.trim()
+
+            
+            if (municipalityInput1) {
+                let formattedMunicipality = municipalityInput1.replace(/\s+/g, "_").toLowerCase();
+                mapFrame.src = `/static/map_${formattedMunicipality}.html`;
+                console.log("Updated map src:", mapFrame.src); // Debugging
+                return; // Stop function here if municipality is selected
+
+                //disableYearAndSeasonControls()
+
+                ///slider and radio disabled
+            }
+
+            mapFrame.src = "{{ url_for('static', filename='realtime_map.html') }}";
+            return;
+        } else if (activeTab === "historical-btn") {
+            //let yearDropdown = document.getElementById("year-dropdown-his");
+            let yearDropdown = document.getElementById("selected-year");
+            
+            //let seasonDropdown = document.getElementById("season-dropdown-his");
+            let season = document.querySelector('input[name="season"]:checked')?.value;
+
+
+            if (!yearDropdown || !seasonDropdown) {
+                console.warn("Year or season dropdowns not found.");
+                return;
+            }
+
+            let year = yearDropdown.textContent;
+            //let season = seasonDropdown.value;
+
+            if (season.toLowerCase() === "season1") season = "1";
+            if (season.toLowerCase() === "season2") season = "2";
+
+            console.log("Selected Year:", year); // Debugging
+            console.log("Selected Season:", season); // Debugging
+
+            if (year && season) {
+                mapFrame.src = `/static/historical_map_${year}_${season}.html`;
+                console.log("Updated map src:", mapFrame.src); // Debugging
+            } else {
+                console.warn("Year or season not selected.");
+            }
+        }
+    }
+
+    window.updateMap = updateMap;
+
+    if (yearDropdown) yearDropdown.addEventListener("change", updateMap);
+    if (seasonDropdown) seasonDropdown.addEventListener("change", updateMap);
+    //changes ni perl end
+
+    //changes ni perl start
+    let municipalityInput = document.getElementById("municipality-search-his");
+    let municipalityDropdownHis = document.getElementById("municipality-dropdown-his");
+
+    if (municipalityInput) {
+        municipalityInput.addEventListener("input", updateMap);
+        municipalityInput.addEventListener("click", updateMap);
+    }
+
+    if (municipalityDropdownHis) {
+        // Use event delegation to handle dynamically added items
+        municipalityDropdownHis.addEventListener("click", function (event) {
+            let selectedOption = event.target.closest(".dropdown-item-his, .dropdown-item");
+            if (!selectedOption || !municipalityInput) return;
+
+            if (selectedOption.classList.contains("dropdown-item-his") || selectedOption.classList.contains("dropdown-item")) { // Ensure it's a valid option
+                let selectedText = selectedOption.textContent.trim();
+                console.log("Dropdown selected:", selectedText);
+
+                // Update input field
+                municipalityInput.value = selectedText;
+
+                // Call updateMap() after selection
+                updateMap(); 
+            }
+        });
+    } else {
+        console.error("municipality-dropdown-his not found!");
+    }//changes ni perl end
+
+});
+
+
+    //zoe changes
+
+    function renderYieldChart(selectedMunicipality = null) {
+            const historicalData = window.historicalDataGlobal;
+
+            let chartTitle;
+            let years = [];
+            let yields = [];
+
+            if (selectedMunicipality) {
+                // Filter data for the selected municipality
+                const municipalityData = historicalData.filter(item =>
+                    item.municipality.toUpperCase() === selectedMunicipality.toUpperCase()
+                );
+
+                // Group data by year and calculate yields for the municipality
+                const yearlyData = {};
+                municipalityData.forEach(item => {
+                    if (!yearlyData[item.year]) {
+                        yearlyData[item.year] = { totalYield: 0, count: 0 };
+                    }
+                    yearlyData[item.year].totalYield += item.yield;
+                    yearlyData[item.year].count += 1;
+                });
+
+                years = Object.keys(yearlyData).sort(); // Sort years in ascending order
+                yields = years.map(year => (yearlyData[year].totalYield / yearlyData[year].count).toFixed(2));
+
+                chartTitle = `Yields Over the Years for ${selectedMunicipality}`;
+            } else {
+                // Group data by year and calculate average yields for Laguna
+                const yearlyData = {};
+                historicalData.forEach(item => {
+                    if (!yearlyData[item.year]) {
+                        yearlyData[item.year] = { totalYield: 0, count: 0 };
+                    }
+                    yearlyData[item.year].totalYield += item.yield;
+                    yearlyData[item.year].count += 1;
+                });
+
+                years = Object.keys(yearlyData).sort(); // Sort years in ascending order
+                yields = years.map(year => (yearlyData[year].totalYield / yearlyData[year].count).toFixed(2));
+
+                chartTitle = "Laguna's Average Yields Over the Years";
+            }
+
+            // Get the canvas context
+            const ctx = document.getElementById("laguna-average-yield-line-chart").getContext("2d");
+
+            // Destroy the existing chart if it exists
+            if (window.lagunaAverageYieldChart) {
+                window.lagunaAverageYieldChart.destroy();
+            }
+
+            // Create the line chart
+            window.lagunaAverageYieldChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: years, // X-axis labels (years)
+                    datasets: [{
+                        label: selectedMunicipality ? `${selectedMunicipality} Yield (t/ha)` : "Laguna Average Yield (t/ha)",
+                        data: yields, // Y-axis data (yields)
+                        borderColor:  "rgba(54, 162, 235, 1)", // Line color
+                        backgroundColor: "rgba(46, 87, 73, 0.2)", // Fill color
+                        borderWidth: 2,
+                        tension: 0.4, // Smooth curve
+                        pointRadius: 4,
+                        pointBackgroundColor:  "rgba(54, 162, 235, 1)"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: true,
+                            text: chartTitle,
+                            font: { size: 16, weight: "bold" }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Year",
+                                font: { size: 14, weight: "bold" }
+                            },
+                            grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                            ticks: { font: { size: 12, weight: "bold" } }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "Yield (t/ha)",
+                                font: { size: 14, weight: "bold" }
+                            },
+                            beginAtZero: true,
+                            grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                            ticks: { font: { size: 12, weight: "bold" } }
+                        }
+                    }
+                }
+            });
+        }
+
+    
+    function renderLagunaAverageYieldChart() {
+        // Group data by year and calculate average yield for each year
+        const historicalData = window.historicalDataGlobal;
+
+        // Create a map to store total yield and count for each year
+        const yearlyData = {};
+        historicalData.forEach(item => {
+            if (!yearlyData[item.year]) {
+                yearlyData[item.year] = { totalYield: 0, count: 0 };
+            }
+            yearlyData[item.year].totalYield += item.yield;
+            yearlyData[item.year].count += 1;
+        });
+
+        // Calculate average yield for each year
+        const years = Object.keys(yearlyData).sort(); // Sort years in ascending order
+        const averageYields = years.map(year => (yearlyData[year].totalYield / yearlyData[year].count).toFixed(2));
+
+        // Get the canvas context
+        const ctx = document.getElementById("laguna-average-yield-line-chart").getContext("2d");
+
+        // Destroy the existing chart if it exists
+        if (window.lagunaAverageYieldChart) {
+            window.lagunaAverageYieldChart.destroy();
+        }
+
+        // Create the line chart
+        window.lagunaAverageYieldChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: years, // X-axis labels (years)
+                datasets: [{
+                    label: "Laguna Average Yield (t/ha)",
+                    data: averageYields, // Y-axis data (average yields)
+                    borderColor: "rgba(54, 162, 235, 1)", // Line color
+                    backgroundColor: "rgba(54, 162, 235, 0.2)", // Fill color
+                    borderWidth: 2,
+                    tension: 0.4, // Smooth curve
+                    pointRadius: 4,
+                    pointBackgroundColor: "rgba(54, 162, 235, 1)"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true },
+                    title: {
+                        display: true,
+                        text: "Laguna's Average Yield Over the Years",
+                        font: { size: 16, weight: "bold" }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Year",
+                            font: { size: 14, weight: "bold" }
+                        },
+                        grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                        ticks: { font: { size: 12, weight: "bold" } }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Average Yield (t/ha)",
+                            font: { size: 14, weight: "bold" }
+                        },
+                        beginAtZero: true,
+                        grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                        ticks: { font: { size: 12, weight: "bold" } }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderMunicipalityYieldBarChart(selectedMunicipality) {
+            const historicalData = window.historicalDataGlobal;
+
+            // Filter data for the selected municipality
+            const municipalityData = historicalData.filter(item =>
+                item.municipality.trim().toUpperCase() === selectedMunicipality.trim().toUpperCase()
+            );
+
+            if (municipalityData.length === 0) {
+                console.warn(`No data found for municipality: ${selectedMunicipality}`);
+                return;
+            }
+
+            // Extract unique years and group data by year and season
+            const years = [...new Set(municipalityData.map(item => item.year))].sort(); // Unique years sorted
+            const wetSeasonData = years.map(year => {
+                const entry = municipalityData.find(item => item.year === year && item.season === 1);
+                return entry ? entry.yield : 0; // Yield for Wet Season or 0 if not available
+            });
+            const drySeasonData = years.map(year => {
+                const entry = municipalityData.find(item => item.year === year && item.season === 2);
+                return entry ? entry.yield : 0; // Yield for Dry Season or 0 if not available
+            });
+
+            // Get the canvas context
+            const ctx = document.getElementById("municipality-seasons-bar-chart").getContext("2d");
+
+            // Destroy the existing chart if it exists
+            if (window.municipalityYieldBarChart) {
+                window.municipalityYieldBarChart.destroy();
+            }
+
+            console.log("Selected Municipality:", selectedMunicipality);
+            console.log("Filtered Municipality Data:", municipalityData);
+
+            console.log("Years:", years);
+            console.log("Wet Season Data:", wetSeasonData);
+            console.log("Dry Season Data:", drySeasonData);
+            // Create the bar chart
+            window.municipalityYieldBarChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: years, // X-axis labels (years)
+                    datasets: [
+                        {
+                            label: "Wet Season",
+                            data: wetSeasonData, // Yields for Wet Season
+                            backgroundColor: "#183874", // Green for Wet Season
+                            borderColor: "#183874",
+                            borderWidth: 1,
+                        },
+                        {
+                            label: "Dry Season",
+                            data: drySeasonData, // Yields for Dry Season
+                            backgroundColor: "#e47c26", // Orange for Dry Season
+                            borderColor: "#e47c26",
+                            borderWidth: 1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: true,
+                            text: `Yield Over Seasons and Years for ${selectedMunicipality}`,
+                            font: { size: 16, weight: "bold" },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Year",
+                                font: { size: 14, weight: "bold" },
+                            },
+                            grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                            ticks: { font: { size: 12, weight: "bold" } },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: "Yield (t/ha)",
+                                font: { size: 14, weight: "bold" },
+                            },
+                            beginAtZero: true,
+                            grid: { color: "rgba(200, 200, 200, 0.2)", drawBorder: false },
+                            ticks: { font: { size: 12, weight: "bold" } },
+                        },
+                    },
+                },
+            });
+        }
+
+        function animateNumber(elementId, start, end, duration) {
+            const element = document.getElementById(elementId);
+            const range = end - start;
+            const increment = range / (duration / 10); // Update every 10ms
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end; // Ensure the final value is exact
+                    clearInterval(timer);
+                }
+                element.textContent = `${current.toFixed(2)} t/ha`; // Format the number
+            }, 10);
+        }
+
+        function updateKPIsWithAnimation() {
+            // Example values for demonstration
+            const avgMunicipalityYield = 4.5; // Final value for KPI 1
+            const municipalityRank = 3; // Final value for KPI 2
+            const percentAboveLagunaAvg = 12.34; // Final value for KPI 3
+            const percentChange = -5.67; // Final value for KPI 4
+
+            // Animate each KPI value
+            animateNumber("kpi-1-value", 0, avgMunicipalityYield, 1000); // Animate from 0 to 4.5 in 1 second
+            animateNumber("kpi-2-value", 0, municipalityRank, 1000); // Animate from 0 to 3 in 1 second
+            animateNumber("kpi-3-value", 0, percentAboveLagunaAvg, 1000); // Animate from 0 to 12.34 in 1 second
+            animateNumber("kpi-4-value", 0, percentChange, 1000); // Animate from 0 to -5.67 in 1 second
+        }
+
+        //add ni perl
+        const ctx = document.getElementById('actual-vs-predicted-chart').getContext('2d');
+
+        const actualVsPredictedChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['2018', '2019', '2020', '2021', '2022', '2023', '2024'],
+                datasets: [
+                    {
+                        label: 'Actual Yield',
+                        data: [3.98, 4.34, 4.15, 4.26, 3.76, 4.5, 4.5, 4.49],
+                        borderColor: '#1b499f',
+                        backgroundColor: 'rgba(27, 73, 159, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'Predicted Yield',
+                        data: [3.43, 4.58, 4.30, 3.86, 4.25, 3.90, 4.26, 4.1],
+                        borderColor: '#ffc91f',
+                        backgroundColor: 'rgba(255, 201, 31, 0.1)',
+                        tension: 0.3,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: "Laguna's Predicted vs Actual Yield (2018–2024)"
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Yield (tons/hectare)'
+                        },
+                        beginAtZero: true
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year'
+                        }
+                    }
+                }
+            }
+        });
+
+        //EXPORT BUTTONS
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+            document.querySelectorAll('.export-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Add export functionality here
+            const format = this.textContent;
+            console.log("Exporting as", format); // Replace with your actual export function
+            });
+        });
+
+        const slider = document.getElementById("year-slider");
+        const selectedYear = document.getElementById("selected-year");
+
+        slider.addEventListener("input", function () {
+            selectedYear.textContent = this.value;
+        });
+
+        ///////////////////////////////////
+        //////   PIE CHART CODE       ////
+        //////////////////////////////////
+
+        function getYieldCategory(yieldValue) {
+            if (yieldValue === "No data" || yieldValue == 0) return "No Data";
+            let y = parseFloat(yieldValue);
+
+            if (y < 0.75) return "Low";
+            if (y < 1.5) return "Moderate";
+            if (y < 2.25) return "High";
+            return "Very High";
+        }
+
+        const categoryColors = {
+            "Low": "#d13237",
+            "Moderate": "#ffc91f",
+            "High": "#69a436",
+            "Very High": "#1b499f"
+        };
+
+        let yieldChartInstance;
+
+        function updatePieChart(yieldData) {
+            const categoryCounts = {
+                "Low": 0,
+                "Moderate": 0,
+                "High": 0,
+                "Very High": 0
+            };
+
+            yieldData.forEach(item => {
+                const category = getYieldCategory(item.yield);
+                categoryCounts[category]++;
+            });
+
+            const labels = [];
+            const values = [];
+            const colors = [];
+
+            Object.entries(categoryCounts).forEach(([label, count]) => {
+                if (count > 0) {
+                    labels.push(label);
+                    values.push(count);
+                    colors.push(categoryColors[label]);
+                }
+            });
+
+
+            const ctx = document.getElementById('yieldPieChart').getContext('2d');
+
+            if (yieldChartInstance) yieldChartInstance.destroy();
+
+            yieldChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Laguna's Real-Time Average Rice Yield Distribution ",
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        },
+                        title: {
+                            display: true,
+                            text: "Laguna's Real-Time Average Rice Yield Distribution ",
+                            font: {
+                                size: 18
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const value = context.parsed;
+                                    const percent = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${value} (${percent}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            formatter: function(value, context) {
+                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${percentage}%`;
+                            },
+                            font: {
+                                weight: 'bold',
+                                size: 14
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels] // 👈 make sure this is outside the 'options'
+            });
+        }
+
+        document.getElementById("year-slider").addEventListener("input", function () {
+            const selectedYear = this.value;
+            document.getElementById("selected-year").textContent = selectedYear;
+            document.getElementById("year-dropdown-his").value = selectedYear;
+        });
+
+        document.querySelectorAll('input[name="season"]').forEach(radio => {
+            radio.addEventListener("change", function () {
+                const selectedValue = this.value;
+                const dropdown = document.getElementById("season-dropdown-his");
+                if (dropdown) {
+                    dropdown.value = selectedValue;
+                }
+            });
+        });
+
+        function disableYearAndSeasonControls() {
+            // Disable year slider container and slider
+            const yearContainer = document.getElementById("year-slider-container");
+            const yearSlider = document.getElementById("year-slider");
+            
+            if (yearContainer && yearSlider) {
+                yearSlider.disabled = true;
+                yearContainer.style.opacity = 0.5;
+                yearContainer.style.pointerEvents = "none";
+            }
+
+            // Disable season radio group and inputs
+            const seasonContainer = document.getElementById("season-radio-group");
+            if (seasonContainer) {
+                const radios = seasonContainer.querySelectorAll('input[type="radio"]');
+                radios.forEach(radio => radio.disabled = true);
+                seasonContainer.style.opacity = 0.5;
+                seasonContainer.style.pointerEvents = "none";
+            }
+        }
+
+        function disableYearAndSeasonControls() {
+            // Disable year slider container and slider
+            const yearContainer = document.getElementById("year-slider-container");
+            const yearSlider = document.getElementById("year-slider");
+            
+            if (yearContainer && yearSlider) {
+                yearSlider.disabled = true;
+                yearContainer.style.opacity = 0.5;
+                yearContainer.style.pointerEvents = "none";
+            }
+
+            // Disable season radio group and inputs
+            const seasonContainer = document.getElementById("season-radio-group");
+            if (seasonContainer) {
+                const radios = seasonContainer.querySelectorAll('input[type="radio"]');
+                radios.forEach(radio => radio.disabled = true);
+                seasonContainer.style.opacity = 0.5;
+                seasonContainer.style.pointerEvents = "none";
+            }
+        }
+
+        function checkMapSrcAndDisableControls() {
+            const mapFrame = document.getElementById("map-frame");
+            if (!mapFrame) return;
+
+            const src = mapFrame.src.toLowerCase();
+
+            if (!src.includes("realtime") && !src.includes("historical")) {
+                disableYearAndSeasonControls();
+            }
+        }
+
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                // Remove active class from all
+                document.querySelectorAll('.export-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                if (this.textContent.trim() === "REPORT") {
+                    exportReportAsPDF();
+                }
+            });
+        });
+
+        function exportReportAsPDF() {
+            const element = document.getElementById('container');
+            if (!element) {
+            alert("No content found to export.");
+            return;
+            }
+
+            const opt = {
+            margin: 0.5,
+            filename: `report_${new Date().toISOString().slice(0, 10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        //changes ni perl start
+        let municipalityRealInput = document.getElementById("municipality-search");
+        let municipalityDropdownReal = document.getElementById("municipality-dropdown");
+
+        if (municipalityRealInput) {
+            municipalityRealInput.addEventListener("input", function () {
+                if (window.updateMap) window.updateMap();
+            });
+            municipalityRealInput.addEventListener("click", function () {
+                if (window.updateMap) window.updateMap();
+            });
+        }
+
+        if (municipalityDropdownReal) {
+            // Use event delegation to handle dynamically added items
+            municipalityDropdownReal.addEventListener("click", function (event) {
+                let selectedOption = event.target.closest(".dropdown-item-real, .dropdown-item");
+                if (!selectedOption || !municipalityRealInput) return;
+
+                if (selectedOption.classList.contains("dropdown-item-real") || selectedOption.classList.contains("dropdown-item")) { // Ensure it's a valid option
+                    let selectedText = selectedOption.textContent.trim();
+                    console.log("Dropdown selected:", selectedText);
+
+                    // Update input field
+                    municipalityRealInput.value = selectedText;
+
+                    // Call updateMap() after selection
+                    if (window.updateMap) window.updateMap(); 
+                }
+            });
+        } else {
+            console.error("municipality-dropdown not found!");
+        }//changes ni perl end
+
+
+
+
+
+
+
+        
+
+
+
+    
+
+
+
+
+
+
+        
+
+    
+
+</script>
+</html>
+
+

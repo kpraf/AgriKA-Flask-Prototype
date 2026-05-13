@@ -1,0 +1,504 @@
+from model.db import get_db_connection, get_realtime_yield_data
+import folium
+import os
+import json
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+from shapely.geometry import shape
+
+municipality_coords = {
+    "alaminos": {"lat": 14.0616, "lng": 121.2604, "zoom": 12},
+    "bay": {"lat": 14.1320, "lng": 121.2569, "zoom": 12},
+    "cabuyao": {"lat": 14.2471, "lng": 121.1367, "zoom": 12},
+    "calauan": {"lat": 14.1384, "lng": 121.3198, "zoom": 12},
+    "cavinti": {"lat": 14.2647, "lng": 121.5455, "zoom": 12},
+    "binan": {"lat": 14.3036, "lng": 121.0781, "zoom": 12},
+    "calamba": {"lat": 14.2127, "lng": 121.1639, "zoom": 12},
+    "santa Rosa": {"lat": 14.2843, "lng": 121.0889, "zoom": 12},
+    "famy": {"lat": 14.4730, "lng": 121.4842, "zoom": 12},
+    "kalayaan": {"lat": 14.3313, "lng": 121.5484, "zoom": 12},
+    "liliw": {"lat": 14.1364, "lng": 121.4399, "zoom": 12},
+    "los banos": {"lat": 14.1699, "lng": 121.2441, "zoom": 12},
+    "luisiana": {"lat": 14.1908, "lng": 121.5256, "zoom": 12},
+    "lumban": {"lat": 14.2956, "lng": 121.4962, "zoom": 12},
+    "mabitac": {"lat": 14.4338, "lng": 121.4113, "zoom": 12},
+    "magdalena": {"lat": 14.2041, "lng": 121.4342, "zoom": 12},
+    "majayjay": {"lat": 14.1447, "lng": 121.4723, "zoom": 12},
+    "nagcarlan": {"lat": 14.1490, "lng": 121.3885, "zoom": 12},
+    "paete": {"lat": 14.3675, "lng": 121.5300, "zoom": 12},
+    "pagsanjan": {"lat": 14.2624, "lng": 121.4570, "zoom": 12},
+    "pakil": {"lat": 14.3800, "lng": 121.4765, "zoom": 12},
+    "pangil": {"lat": 14.4074, "lng": 121.4856, "zoom": 12},
+    "pila": {"lat": 14.2346, "lng": 121.3656, "zoom": 12},
+    "rizal": {"lat": 14.0841, "lng": 121.4113, "zoom": 12},
+    "san pablo": {"lat": 14.0642, "lng": 121.3233, "zoom": 12},
+    "san pedro": {"lat": 14.3562, "lng": 121.0553, "zoom": 12},
+    "santa cruz": {"lat": 14.2691, "lng": 121.4113, "zoom": 12},
+    "santa maria": {"lat": 14.5129, "lng": 121.4342, "zoom": 12},
+    "siniloan": {"lat": 14.4383, "lng": 121.4856, "zoom": 12},
+    "victoria": {"lat": 14.2028, "lng": 121.3370, "zoom": 12},
+}
+
+def get_color(yield_value):
+    if yield_value == "No data" or yield_value == 0:
+        return "#808080"
+    elif yield_value < 3:
+        return "#d13237"
+    elif 3 <= yield_value < 4:
+        return "#ffc91f"
+    elif 4 <= yield_value < 5:
+        return "#69a436"
+    else:
+        return "#1b499f"
+    
+def get_color_realtime(yield_value):
+    if yield_value == "No data" or yield_value == 0:
+        return "#808080"
+    elif yield_value < 0.75:
+        return "#d13237"
+    elif 0.75 <= yield_value < 1.5:
+        return "#ffc91f"
+    elif 1.5 <= yield_value < 2.25:
+        return "#69a436"
+    else:
+        return "#1b499f"
+
+def create_map():
+    m = folium.Map(
+        location=[14.16667, 121.33333],
+        zoom_start=10,
+        tiles="CartoDB Positron",
+        attr="© OpenStreetMap contributors, © CartoDB"
+    )
+
+    geojson_files = [f"data/{file}" for file in os.listdir("data") if file.endswith(".geojson")]
+
+    municipalities, yields, yield_data = get_realtime_yield_data()
+    yield_dict = {m.lower(): v for m, v in yield_data.items()}
+
+    valid_yields = {mun: y for mun, y in yield_dict.items() if isinstance(y, (int, float)) and y > 0}
+    max_mun = max(valid_yields, key=valid_yields.get) if valid_yields else None
+
+    for file in geojson_files:
+        if os.path.exists(file):
+            with open(file, "r", encoding="utf-8") as f:
+                geojson_data = json.load(f)
+                geojson_data["features"] = [
+                    feature for feature in geojson_data["features"]
+                    if feature["geometry"]["type"] in ["Polygon", "MultiPolygon"]
+                ]
+
+                for feature in geojson_data["features"]:
+                    municipality_name = feature["properties"].get("name", "Unknown Municipality").strip().lower()
+                    yield_value = yield_dict.get(municipality_name, "No data")
+                    year = "2024"  # or use current year dynamically
+                    season = "Second"  # or determine via logic if needed
+
+                    tooltip_html = folium.Tooltip(
+                        f"""
+                        <div class="tooltip-municipality" data-municipality="{municipality_name}">
+                            🌾 {municipality_name.title()}
+                        </div>
+                        <div>
+                            <b>Year:</b> {year}<br>
+                            <b>Season:</b> {season}<br>
+                            <b>Yield:</b> {yield_value if isinstance(yield_value, (int, float)) else 'No Data'}
+                        </div>
+                        """,
+                        sticky=True
+                    )
+
+                    geojson_layer = folium.GeoJson(
+                        feature,
+                        name=municipality_name,
+                        style_function=lambda feature, y=yield_value: {
+                            "fillColor": get_color_realtime(y),
+                            "color": "black",
+                            "weight": 2,
+                            "fillOpacity": 0.7,
+                        },
+                        tooltip=tooltip_html,
+                        highlight_function=lambda x: {"weight": 3, "color": "blue"},
+                        interactive=True
+                    ).add_to(m)
+
+                    geojson_layer.feature = feature
+
+                    if municipality_name == max_mun:
+                        emoji = "⭐"
+                        geom = shape(feature["geometry"])
+                        centroid = geom.centroid
+                        folium.Marker(
+                            location=[centroid.y, centroid.x],
+                            icon=folium.DivIcon(html=f"""<div style="font-size: 20px;">{emoji}</div>""")
+                        ).add_to(m)
+
+    # JavaScript to make GeoJSON clickable
+    click_js = """
+    <script>
+        function handleGeoJsonClick(e) {
+            var layer = e.target;
+            var tooltipId = layer.getAttribute("aria-describedby");
+            var tooltipElement = document.getElementById(tooltipId);
+
+            if (tooltipElement) {
+                var muniDiv = tooltipElement.querySelector('.tooltip-municipality');
+                var municipality = muniDiv ? muniDiv.dataset.municipality : "Unknown Municipality";
+                var tooltipText = tooltipElement.innerHTML;
+
+                var yearMatch = tooltipText.match(/<b>Year:<\/b> (\\d{4})/);
+                var seasonMatch = tooltipText.match(/<b>Season:<\/b> (\\w+)/);
+                var yieldMatch = tooltipText.match(/<b>Yield:<\/b> ([\\d.]+)/);
+
+                var year = yearMatch ? yearMatch[1] : "Unknown Year";
+                var season = seasonMatch ? seasonMatch[1] : "Unknown Season";
+                var yieldValue = yieldMatch ? yieldMatch[1] : "No Data";
+                if (yieldValue === "0" || yieldValue === "0.0") yieldValue = "No Data";
+
+                fetch('/handle_click', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        municipality: municipality,
+                        year: year,
+                        season: season,
+                        yield: yieldValue
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.top.location.href = '/dashboard?active=realtime';
+                })
+                .catch(err => console.error("❌ Error:", err));
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var interval = setInterval(function() {
+                var layers = document.querySelectorAll(".leaflet-interactive");
+                if (layers.length > 0) {
+                    layers.forEach(layer => {
+                        layer.addEventListener("click", handleGeoJsonClick);
+                    });
+                    clearInterval(interval);
+                }
+            }, 100);
+        });
+    </script>
+    """
+    m.get_root().html.add_child(folium.Element(click_js))
+
+    if not os.path.exists("static"):
+        os.makedirs("static")
+    m.fit_bounds([[13.4, 121.0], [14.4, 121.6]])
+    m.save("static/realtime_map.html")
+
+
+def create_historical_map(year, season):
+    """
+    Generates a Folium map with municipalities colored based on historical yield values.
+    """
+    m = folium.Map(
+        location=[14.16667, 121.33333],
+        zoom_start=8.8,
+        tiles="CartoDB Positron",
+        attr="© OpenStreetMap contributors, © CartoDB"
+    )
+
+    geojson_files = [f"data/{file}" for file in os.listdir("data") if file.endswith(".geojson")]
+
+    # Fetch historical data
+    historical_data = get_historical_data(year, season)
+    yield_dict = {entry["municipality"].strip().lower(): entry["yield"] for entry in historical_data}
+
+    for file in geojson_files:
+        if os.path.exists(file):
+            with open(file, "r", encoding="utf-8") as f:
+                geojson_data = json.load(f)
+
+                geojson_data["features"] = [
+                    feature for feature in geojson_data["features"]
+                    if feature["geometry"]["type"] in ["Polygon", "MultiPolygon"]
+                ]
+
+                for feature in geojson_data["features"]:
+                    municipality_name = feature["properties"].get("name", "Unknown Municipality").strip().lower()
+
+                    if municipality_name not in yield_dict:
+                        print(f"❌ No historical yield data for: {municipality_name}")
+                    else:
+                        print(f"✅ Found: {municipality_name} -> {yield_dict[municipality_name]}")
+
+                    raw_yield = yield_dict.get(municipality_name, None)
+                    yield_value = "No data" if raw_yield is None or float(raw_yield) == 0 else raw_yield
+
+                    tooltip_html = folium.Tooltip(
+                        f"""
+                        <div class="tooltip-municipality" data-municipality="{municipality_name}">
+                            🌾 {municipality_name.title()}
+                        </div>
+                        <div>
+                            <b>Year:</b> {year}<br>
+                            <b>Season:</b> {season}<br>
+                            <b>Yield:</b> {yield_value}
+                        </div>
+                        """,
+                        sticky=True
+                    )
+
+                    geojson_layer = folium.GeoJson(
+                        feature,
+                        name=municipality_name,
+                        style_function=lambda feature, y=yield_value: {
+                            "fillColor": get_color(y),
+                            "color": "black",
+                            "weight": 2,
+                            "fillOpacity": 0.7,
+                        },
+                        tooltip=tooltip_html,
+                        highlight_function=lambda x: {'weight': 3, 'color': 'blue'},
+                        interactive=True  # Make the GeoJSON features interactive
+                    ).add_to(m)
+
+                    # Attach the feature to the geojson_layer
+                    geojson_layer.feature = feature
+
+    # Inject JavaScript for click handling
+    click_js = """
+    <script>
+        function handleGeoJsonClick(e) {
+            var layer = e.target;
+            console.log("Clicked layer:", layer);
+
+            var tooltipId = layer.getAttribute("aria-describedby");
+            var tooltipElement = document.getElementById(tooltipId);
+
+            if (tooltipElement) {
+                var tooltipText = tooltipElement.innerHTML;
+
+                // Extract municipality from data attribute
+                var muniDiv = tooltipElement.querySelector('.tooltip-municipality');
+                var municipality = muniDiv ? muniDiv.dataset.municipality : "Unknown Municipality";
+
+                // Extract year, season, and yield using regex
+                var yearMatch = tooltipText.match(/<b>Year:<\/b> (\d{4})/);
+                var seasonMatch = tooltipText.match(/<b>Season:<\/b> (\w+)/);
+                var yieldMatch = tooltipText.match(/<b>Yield:<\/b> ([\d.]+)/);
+
+                var year = yearMatch ? yearMatch[1] : "Unknown Year";
+                var season = seasonMatch ? seasonMatch[1] : "Unknown Season";
+                var yieldValue = yieldMatch ? yieldMatch[1] : "No Data";
+                if (yieldValue === "0" || yieldValue === "0.0") {
+                    yieldValue = "No Data";
+                }
+
+
+                console.log("📌 Sending:", municipality, year, season, yieldValue);
+
+                fetch('/handle_click', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        municipality: municipality,
+                        year: year,
+                        season: season,
+                        yield: yieldValue
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ Sent to backend:", data);
+
+                    window.top.location.href = '/dashboard?active=historical';
+                })
+                .catch(error => console.error("❌ Error sending to backend:", error));
+            } else {
+                console.log("❌ Tooltip not found for clicked layer.");
+            }
+        }
+
+
+    // Check if the map layers are loaded
+    document.addEventListener("DOMContentLoaded", function() {
+        var interval = setInterval(function() {
+            var geoJsonLayers = document.querySelectorAll('.leaflet-interactive');
+            
+            if (geoJsonLayers.length > 0) {
+                console.log("Map is ready, attaching click handlers.");
+                
+                // Attach click handlers to each GeoJSON layer (only once)
+                geoJsonLayers.forEach(function(layer) {
+                    layer.addEventListener("click", function(event) {
+                        console.log("Click event on GeoJSON layer detected");  // Log click detection
+                        handleGeoJsonClick(event);
+                    });
+                });
+
+                // Stop the interval once layers are ready
+                clearInterval(interval);
+            } else {
+                console.log("❌ Map object is not ready yet.");
+            }
+        }, 100);  // Check every 100ms
+    });
+    </script>
+    """
+    m.get_root().html.add_child(folium.Element(click_js))
+
+    if not os.path.exists("static"):
+        os.makedirs("static")
+    m.fit_bounds([[13.4, 121.0], [14.4, 121.6]])
+    m.save("static/historical_map.html")
+
+def create_all_historical_maps():
+    """
+    Generates a Folium map for each season in each year based on historical yield data.
+    """
+    # Get all unique year-season combinations
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT DISTINCT year, season FROM rice_field")
+    year_season_combinations = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    for entry in year_season_combinations:
+        year, season = entry["year"], entry["season"]
+        print(f"Generating map for {year} - {season}")
+        create_historical_map(year, season)
+        
+        # Save each map with a unique filename
+        filename = f"static/historical_map_{year}_{season}.html"
+        # ✅ Delete existing file if it already exists
+        if os.path.exists(filename):
+            os.remove(filename)  
+
+        os.rename("static/historical_map.html", filename)  # Rename safely
+
+def create_maps_per_municipality():
+    """
+    Generates a separate Folium map for each municipality with a uniform green color.
+    """
+    if not os.path.exists("static"):
+        os.makedirs("static")
+
+    geojson_files = [f"data/{file}" for file in os.listdir("data") if file.endswith(".geojson")]
+
+    for file in geojson_files:
+        if os.path.exists(file):
+            with open(file, "r", encoding="utf-8") as f:
+                geojson_data = json.load(f)
+
+                for municipality_name, coords in municipality_coords.items():
+                    municipality_name = municipality_name.lower()  # Ensure matching case
+                    
+                    # Filter GeoJSON to only include this municipality
+                    filtered_geojson = {
+                        "type": "FeatureCollection",
+                        "features": [
+                            feature for feature in geojson_data["features"]
+                            if feature["properties"].get("name", "").strip().lower() == municipality_name
+                        ],
+                    }
+
+                    if not filtered_geojson["features"]:
+                        print(f"⚠️ No GeoJSON data found for {municipality_name}")
+                        continue  # Skip if no features match
+
+                    # Create a map centered on the municipality
+                    m = folium.Map(
+                        location=[coords["lat"], coords["lng"]],
+                        zoom_start=11,
+                        tiles="CartoDB Positron"
+                    )
+
+                    tooltip_html = folium.Tooltip(
+                        f"""
+                        <div class="tooltip-municipality" data-municipality="{municipality_name}">
+                            🌾 {municipality_name.title()}
+                        </div>
+                        """,
+                        sticky=True
+)
+
+                    # Add filtered municipality boundary with green color
+                    geojson_layer = folium.GeoJson(
+                        filtered_geojson,
+                        name=municipality_name,
+                        style_function=lambda feature: {
+                            "fillColor": "green",
+                            "color": "black",
+                            "weight": 2,
+                            "fillOpacity": 0.7,
+                        },
+                        tooltip=tooltip_html,
+                        highlight_function=lambda x: {'weight': 3, 'color': 'blue'},
+                        interactive=True
+                    )
+                    
+                    geojson_layer.add_to(m)
+
+                    bounds = geojson_layer.get_bounds()
+                    south_lat, west_lng = bounds[0]
+                    north_lat, east_lng = bounds[1]
+
+                    south_lat -= 0.2  # move view downward a bit
+
+                    new_bounds = [[south_lat, west_lng], [north_lat, east_lng]]
+
+                    m.fit_bounds(new_bounds)
+
+                    # Save the map
+                    filename = f"static/map_{municipality_name.replace(' ', '_')}.html"
+                    
+                    m.save(filename)
+                    
+                    print(f"✅ Map saved: {filename}")
+
+def generate_yield_chart(municipalities, yields):
+    """
+    Generates a bar chart for yield data and encodes it as a base64 image.
+    """
+    plt.figure(figsize=(10, 5))
+    plt.bar(municipalities, yields, color="#1b499f")
+    plt.xlabel("Municipalities")
+    plt.ylabel("Yield (tons per hectare)")
+    plt.xticks(rotation=90)
+    plt.title("Crop Yield Per Municipality")
+    plt.tight_layout()
+
+    img = BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    chart_url = base64.b64encode(img.getvalue()).decode()
+    plt.close()
+
+    return chart_url
+
+
+# Fetch historical data from MySQL
+def get_historical_data(year=None, season=None):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Base query with JOIN
+    query = """
+        SELECT rf.municipality, rf.year, rf.season, h.yield
+        FROM historical h
+        JOIN rice_field rf ON h.ID_rice = rf.ID_rice
+    """
+    params = []
+
+    # Add filtering if parameters are provided
+    if year is not None and season is not None:
+        query += " WHERE rf.year = %s AND rf.season = %s"
+        params.extend([year, season])
+
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return data

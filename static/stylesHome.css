@@ -1,0 +1,515 @@
+    /* =================================
+    Import Fonts
+    ================================= */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+
+
+    /* =================================
+    Global Styles
+    ================================= */
+    body {
+        height: 100%;
+        margin: 0; 
+        padding: 0;
+        font-family: Arial, sans-serif;
+        box-sizing: border-box;
+    }
+    
+    /* Add top margin to offset fixed navigation */
+    body {
+        margin-top: 50px;
+    }
+
+    /* =================================
+    Slideshow Styles
+    ================================= */
+    .slideshow {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        text-align: center;
+    }
+    
+    .slide {
+        display: none;
+        padding: 20px;
+        animation: fadeEffect 1s ease-in-out;
+    }
+    
+    .slide.active {
+        display: block;
+    }
+    
+    .arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.1);
+        color: white;
+        border: none;
+        padding: 20px 25px;
+        cursor: pointer;
+        font-size: 32px;
+        transition: background 0.3s, opacity 0.3s;
+        opacity: 0.3;
+        border-radius: 5px;
+    }
+    
+    .arrow:hover {
+        background: rgba(0, 0, 0, 0.6);
+        opacity: 1;
+    }
+    
+    .arrow-left {
+        left: 10px;
+    }
+    
+    .arrow-right {
+        right: 10px;
+    }
+    
+    @keyframes fadeEffect {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+
+
+    /* =================================
+    Footer Styles
+    ================================= */
+    footer {
+        background-color: #144a30;
+        color: #fff;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    /* Container for the footer columns */
+    .footer-section {
+        display: flex;
+        justify-content: center; 
+        align-items: center;     
+        gap: 10px;               
+        flex-wrap: wrap;         
+    }
+    
+    /* Individual footer columns */
+    .footer-column {
+        flex: none;
+        min-width: 200px;        
+    }
+    
+    /* Styling for the horizontal rule */
+    footer hr {
+        border: 1px solid #fff;
+        margin: 20px 0;
+    }
+    
+    /* Footer copyright text */
+    .footer-copy {
+        margin: 0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .footer-section {
+        flex-direction: column;
+        gap: 20px; 
+        }
+    }
+
+
+    /* Navigation Bar Styles */
+    nav {
+        background-color: #144a30;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50px;  
+        padding: 5px 10px;
+        z-index: 2000;
+        box-sizing: border-box;
+    }
+    
+    /* Flex container spanning the full width */
+    .nav-container {
+        display: flex;
+        justify-content: space-between; 
+        align-items: center;
+        width: 100%;
+    }
+    
+    /* Logo Styling */
+    .nav-logo a img {
+        height: 40px; 
+        width: auto;
+        display: block;
+    }
+    
+    /* Navigation Links Container */
+    .nav-links {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Each navigation link item */
+    .nav-links li {
+        margin-left: 10px;  
+    }
+    
+    /* Link styles */
+    .nav-links a {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+    
+    /* Smaller icon images for links */
+    .nav-links img {
+        max-height: 35px;
+        width: auto;
+    }
+    
+    /* Navigation Link Tooltip */
+    nav ul li a {
+        position: relative;
+        display: inline-block;
+    }
+    nav ul li a .tooltip {
+        display: none;
+        position: absolute;
+        top: 30px; 
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #555;
+        color: white;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        margin-top: 2px;
+    }
+    nav ul li a:hover .tooltip {
+        display: block;
+        opacity: 1;
+    }
+
+    /* Navigation Tooltips (for nav links) */
+    nav ul li a {
+        position: relative;
+        display: inline-block;
+    }
+    nav ul li a .tooltip {
+        display: none;
+        position: absolute;
+        top: 35px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #555;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        margin-top: 5px;
+    }
+    nav ul li a:hover .tooltip {
+        display: block;
+        opacity: 1;
+    }
+
+    .nav-label {
+        font-family: 'Oswald', sans-serif;
+        font-size: 20px;
+        color: #ffffff; /* White text */
+        padding-right: 15px;
+        border-radius: 5px;
+        display: inline-block;
+        text-align: center;
+    }
+
+
+    /* =================================
+    Utility Classes for Images & Tooltips
+    ================================= */
+    .small-logo {
+        height: 60px;
+        width: auto;
+        display: block;
+    }
+    .collaborator {
+        position: relative;
+        display: inline-block;
+    }
+    .tooltip {
+        display: none;
+        position: absolute;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #555;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        margin-top: 5px;
+    }
+    .collaborator:hover .tooltip {
+        display: block;
+        opacity: 1;
+    }
+
+
+    /* =================================
+    Container & Background Styles
+    ================================= */
+    /* Outer container – using block for full width */
+    #container {
+        display: block;
+        width: 100%;
+        /* Uncomment the following if you need a full-height flex container:
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 50px);
+        */
+    }
+    .image-background {
+        background-image: url('agri.jpg');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        text-align: center;
+        padding: 100px 20px;
+        min-height: 400px;
+    }
+    .color-background {
+        background-color: #e7e9e0;
+        color: white;
+        text-align: center;
+    }
+
+
+    /* =================================
+    Typography
+    ================================= */
+    h1 {
+        margin-top: 30px;
+        margin-bottom: 40px;
+        font-size: 2.5em;
+        text-shadow: 2px 2px 5px black;
+        font-family: 'Montserrat', sans-serif;
+    }
+    @font-face {
+        font-family: 'Garet Book';
+        src: url('path/to/GaretBook-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    h2 {
+        font-size: 20px;
+        font-family: 'Montserrat';
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+
+    body {
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f8f8f8;
+    }
+    
+
+    /* =================================
+    New Style
+    ================================= */
+    
+    /* Hero Section with Rice Field Background */
+    .hero {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Full screen height */
+        text-align: left;
+        padding: 50px;
+        position: relative;
+        background: url("/static/images/rice_field.jpg") no-repeat center center;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+
+    }
+
+    /* Dark Overlay to Enhance Readability */
+    .hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Dark overlay */
+    }
+
+    /* Ensures content is above the overlay */
+    .hero-content {
+        display: flex;
+        align-items: center;
+        gap: 50px;
+        max-width: 1200px;
+        width: 100%;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Bigger & More Prominent AgriKA Image */
+    .hero-image img {
+        width: 600px;  
+        height: auto;
+        border-radius: 15px;
+        box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Update Text Styling */
+    .hero-text {
+        max-width: 500px;
+        color: #fff; /* White text */
+    }
+
+    .hero-text h1 {
+        font-size: 4rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color:  #fff;
+    }
+
+    .hero-text p {
+        font-size: 1.5rem;
+        line-height: 1.6;
+        color: #e0e0e0; 
+    }
+
+    /* Button Styling */
+    .hero-text .learn-more-btn {
+        background: #ffeb3b;
+        color: #1b5e20;
+        padding: 15px 25px;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .hero-text .learn-more-btn:hover {
+        background: #cddc39;
+        color: #0d470d;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .hero {
+            height: auto;
+            padding: 40px;
+        }
+        .hero-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        .hero-image img {
+            width: 80%;
+        }
+        .hero-text {
+            max-width: 90%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-text h1 {
+            font-size: 3rem;
+        }
+        .hero-text p {
+            font-size: 1.2rem;
+        }
+    }
+
+    
+    /* Mission & Vision */
+    .about-yield {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+        padding: 20px;
+        background: white;
+    }
+    
+    .About-us, .yield {
+        width: 40%;
+        padding: 20px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .about-us-two {
+        width: 90%;
+        padding: 20px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Team Section */
+    .team {
+        text-align: center;
+        padding: 60px 20px;
+        background: #fff;
+    }
+    
+    .team-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .team-card {
+        width: 250px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .team-card img {
+        width: 100px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+    }
+    
+    .team-card h3 {
+        font-size: 1.2rem;
+        margin: 10px 0;
+    }
+    
+    .team-card p {
+        font-size: 1rem;
+        color: gray;
+    }
+    
