@@ -17,6 +17,24 @@ scheduler = APScheduler()
 app.secret_key = os.environ["SECRET_KEY"]
 
 
+def try_generate_maps():
+    """Generate map files when dependencies are ready, but do not block page load."""
+    if os.environ.get("GENERATE_MAPS_ON_REQUEST") != "true":
+        return
+
+    map_jobs = [
+        ("real-time map", create_map),
+        ("historical maps", create_all_historical_maps),
+        ("municipality maps", create_maps_per_municipality),
+    ]
+
+    for job_name, job in map_jobs:
+        try:
+            job()
+        except Exception as e:
+            print(f"Skipping {job_name}: {e}")
+
+
 @scheduler.task('interval', id='sentinel_get', days=1)
 def sentinel_get():
 
@@ -93,9 +111,7 @@ def get_real_time_data():
 
 @app.route('/')
 def home():
-    create_map()
-    create_all_historical_maps()
-    create_maps_per_municipality()
+    try_generate_maps()
     return render_template('HomePage.html')
 
 # Zoe's Dashboard Update
@@ -105,9 +121,13 @@ def dashboard():
         municipalities, real_time_yields, real_time_yield_data = get_realtime_yield_data()  #Unpacking three values ✅ 
     except Exception as e:
         print("❌ Error in get_realtime_yield_data:", e)
-        municipalities, yields, yield_data = [], [], {}
+        municipalities, real_time_yields, real_time_yield_data = [], [], {}
     
-    historical_yield_data = get_historical_data()
+    try:
+        historical_yield_data = get_historical_data()
+    except Exception as e:
+        print("❌ Error in get_historical_data:", e)
+        historical_yield_data = []
     municipality_clicked = session.get('municipality_clicked','')  # Default to 'Not clicked' if not found
 
     #yearly_trends = process_yearly_trends(historical_yield_data)
@@ -149,13 +169,21 @@ def multi_year():
     except ValueError:
         season = None
 
-    all_munis = get_all_municipalities()
+    try:
+        all_munis = get_all_municipalities()
+    except Exception as e:
+        print("❌ Error in get_all_municipalities:", e)
+        all_munis = []
 
     if not municipalities:
         municipalities = all_munis[:5]
 
     # Always fetch all season data to allow conditional processing
-    historical_data = get_multi_year(season=None, municipalities=municipalities)
+    try:
+        historical_data = get_multi_year(season=None, municipalities=municipalities)
+    except Exception as e:
+        print("❌ Error in get_multi_year:", e)
+        historical_data = []
 
     # chart_data[municipality][season][year] = yield
     chart_data = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))

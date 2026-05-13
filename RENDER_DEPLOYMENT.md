@@ -26,5 +26,27 @@ the Flask app.
 The older `data/laguna_crop_database.sql` file is MySQL syntax and should not be
 run directly against Render Postgres.
 
-Historical seed data still needs to be imported separately into `rice_field` and
-`historical`.
+Run this from a Render shell or any machine that has access to the database:
+
+```bash
+python scripts/setup_render_db.py
+```
+
+That command creates the tables and inserts the baseline `rice_field` rows for
+all municipalities from 2018 through 2024.
+
+To import historical yield values, prepare a CSV with these columns:
+
+```csv
+municipality,year,season,yield
+ALAMINOS,2018,1,4.12
+ALAMINOS,2018,2,3.98
+```
+
+Then run:
+
+```bash
+python scripts/setup_render_db.py --historical-csv data/historical_data.csv
+```
+
+`data/historical_data_template.csv` is a small example of the expected format.

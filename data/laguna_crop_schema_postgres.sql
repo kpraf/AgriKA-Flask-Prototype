@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS rice_field (
     id_rice SERIAL PRIMARY KEY,
     municipality VARCHAR(50) NOT NULL,
     year INTEGER NOT NULL,
-    season SMALLINT NOT NULL CHECK (season IN (1, 2))
+    season SMALLINT NOT NULL CHECK (season IN (1, 2)),
+    UNIQUE (municipality, year, season)
 );
 
 CREATE TABLE IF NOT EXISTS real_time (
@@ -18,7 +19,8 @@ CREATE TABLE IF NOT EXISTS real_time (
 CREATE TABLE IF NOT EXISTS historical (
     id_his SERIAL PRIMARY KEY,
     id_rice INTEGER NOT NULL REFERENCES rice_field(id_rice) ON DELETE CASCADE,
-    yield DOUBLE PRECISION
+    yield DOUBLE PRECISION,
+    UNIQUE (id_rice)
 );
 
 CREATE INDEX IF NOT EXISTS idx_rice_field_municipality
