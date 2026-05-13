@@ -17,6 +17,13 @@ scheduler = APScheduler()
 app.secret_key = os.environ["SECRET_KEY"]
 
 
+if os.environ.get("AUTO_INIT_DB", "true").lower() == "true":
+    try:
+        initialize_database()
+    except Exception as e:
+        print(f"Database initialization skipped: {e}")
+
+
 def try_generate_maps():
     """Generate map files when dependencies are ready, but do not block page load."""
     if os.environ.get("GENERATE_MAPS_ON_REQUEST") != "true":

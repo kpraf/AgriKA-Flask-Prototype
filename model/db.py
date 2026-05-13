@@ -1,9 +1,44 @@
 # models/db.py
 import os
+from pathlib import Path
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import pandas as pd
+
+
+MUNICIPALITIES = [
+    "ALAMINOS",
+    "BAY",
+    "CABUYAO",
+    "CALAUAN",
+    "CAVINTI",
+    "BINAN",
+    "CALAMBA",
+    "SAN PEDRO",
+    "SANTA ROSA",
+    "FAMY",
+    "KALAYAAN",
+    "LILIW",
+    "LOS BANOS",
+    "LUISIANA",
+    "LUMBAN",
+    "MABITAC",
+    "MAGDALENA",
+    "MAJAYJAY",
+    "NAGCARLAN",
+    "PAETE",
+    "PAGSANJAN",
+    "PAKIL",
+    "PANGIL",
+    "PILA",
+    "RIZAL",
+    "SAN PABLO",
+    "SANTA CRUZ",
+    "SANTA MARIA",
+    "SINILOAN",
+    "VICTORIA",
+]
 
 
 # =========================
@@ -16,6 +51,38 @@ def get_db_connection():
         raise RuntimeError("DATABASE_URL environment variable is required.")
 
     return psycopg2.connect(database_url)
+
+
+def initialize_database(start_year=2018, end_year=2024):
+    """Create Render PostgreSQL tables and baseline rice field rows."""
+    schema_path = Path(__file__).resolve().parents[1] / "data" / "laguna_crop_schema_postgres.sql"
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(schema_path.read_text(encoding="utf-8"))
+
+            for municipality in MUNICIPALITIES:
+                for year in range(start_year, end_year + 1):
+                    for season in (1, 2):
+                        cursor.execute(
+                            """
+                            INSERT INTO rice_field (municipality, year, season)
+                            VALUES (%s, %s, %s)
+                            ON CONFLICT (municipality, year, season) DO NOTHING
+                            """,
+                            (municipality, year, season),
+                        )
+
+        conn.commit()
+        print("Database schema and baseline rice_field rows are ready.")
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
 
 
 # =========================

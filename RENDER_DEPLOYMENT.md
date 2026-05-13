@@ -14,6 +14,7 @@
 - `SENTINELHUB_INSTANCE_ID`
 - `SENTINELHUB_CLIENT_ID`
 - `SENTINELHUB_CLIENT_SECRET`
+- `AUTO_INIT_DB` can be left unset. It defaults to `true`.
 
 Use the Render Postgres internal database URL for `DATABASE_URL` when the web
 service and database are in the same Render region.
@@ -26,7 +27,11 @@ the Flask app.
 The older `data/laguna_crop_database.sql` file is MySQL syntax and should not be
 run directly against Render Postgres.
 
-Run this from a Render shell or any machine that has access to the database:
+The app automatically creates the tables and baseline `rice_field` rows on
+startup when `AUTO_INIT_DB` is unset or set to `true`. This works on Render's
+free tier because it does not require Shell access.
+
+If you have Shell access, you can also run the setup manually:
 
 ```bash
 python scripts/setup_render_db.py
