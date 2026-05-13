@@ -1,6 +1,6 @@
 # FINAL IMPORTS
 import sys
-from flask import Flask, render_template, jsonify, request, session
+from flask import Flask, config, render_template, jsonify, request, session
 from flask_apscheduler import APScheduler
 from model.webloader import *
 from model.sentinelcollection import *
@@ -9,27 +9,27 @@ from model.model_loader import *
 from model.db import *
 from collections import defaultdict
 import random 
+import os
 #from services.yield_analytics import *
-
-sys.path.insert(0, r"C:\Users\perli\Desktop\AgriKA Web\AgriKA\Thesis_Web_new\AgriKA Flask Prototype")
 
 app = Flask(__name__)
 scheduler = APScheduler()
-app.secret_key = 'your_secret_key'
+app.secret_key = os.environ["SECRET_KEY"]
 
 
 @scheduler.task('interval', id='sentinel_get', days=1)
 def sentinel_get():
 
     print("\n\n\nSENTINEL WORKING\n\n\n")
-    filepath = r"C:\Users\perli\Desktop\AgriKA Web\AgriKA\Thesis_Web_new\AgriKA Flask Prototype\static\fields_coordinates.geojson"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    filepath = os.path.join(BASE_DIR, "static", "fields_coordinates.geojson")
     #filepath = os.path.join(os.getcwd(), "static", "fields_coordinates.geojson")
     
     # Sentinel acc ni Robby
     config = SHConfig()
-    config.instance_id = '5912fe92-43ec-4a12-b9b6-70ff43c6bf82'
-    config.sh_client_id = '0faa910e-04eb-4c25-a6f1-e1d1f7a14b04'
-    config.sh_client_secret = 'VmgGWW0JOAvnjRl07knOb5jGsDruADJp'
+    config.instance_id = os.environ["SENTINELHUB_INSTANCE_ID"]
+    config.sh_client_id = os.environ["SENTINELHUB_CLIENT_ID"]
+    config.sh_client_secret = os.environ["SENTINELHUB_CLIENT_SECRET"]
 
     ndvi_retriever = SentinelImageGet(filepath, config)
 

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 from shapely.geometry import shape
+from psycopg2.extras import RealDictCursor
 
 municipality_coords = {
     "alaminos": {"lat": 14.0616, "lng": 121.2604, "zoom": 12},
@@ -359,7 +360,7 @@ def create_all_historical_maps():
     """
     # Get all unique year-season combinations
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT DISTINCT year, season FROM rice_field")
     year_season_combinations = cursor.fetchall()
     cursor.close()
@@ -482,7 +483,7 @@ def generate_yield_chart(municipalities, yields):
 # Fetch historical data from MySQL
 def get_historical_data(year=None, season=None):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     # Base query with JOIN
     query = """

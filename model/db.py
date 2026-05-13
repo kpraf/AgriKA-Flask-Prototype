@@ -1,6 +1,7 @@
 # models/db.py
 import os
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import pandas as pd
 
@@ -10,7 +11,11 @@ import pandas as pd
 # =========================
 def get_db_connection():
     """Create and return a new PostgreSQL connection."""
-    return psycopg2.connect(os.environ["postgresql://agrika_user:9zLg9OrIm3yQduyBqLDtBqDjlJoSwd9Y@dpg-d82670e7r5hc73e6h8fg-a/laguna_crop_yield"])
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is required.")
+
+    return psycopg2.connect(database_url)
 
 
 # =========================
@@ -18,7 +23,7 @@ def get_db_connection():
 # =========================
 def get_historical_data(year=None, season=None):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     query = """
         SELECT rf.municipality, rf.year, rf.season, h.yield
@@ -174,7 +179,7 @@ def get_realtime_yield_data():
 # =========================
 def get_multi_year(season=None, municipalities=None):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     query = """
         SELECT rf.municipality, rf.year, rf.season, h.yield
