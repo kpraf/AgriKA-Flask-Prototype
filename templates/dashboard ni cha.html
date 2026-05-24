@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //  --- Toggle Real-Time / Historical Content --- //
     document.getElementById("realtime-btn").addEventListener("click", function () {
-        window.location.href = "http://127.0.0.1:5000/dashboard";
+        window.location.href = "{{ url_for('dashboard') }}";
         document.getElementById("realtime-content").style.display = "block";
         document.getElementById("historical-content").style.display = "none";
         this.classList.add("active");
