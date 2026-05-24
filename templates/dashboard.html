@@ -75,7 +75,7 @@
                 <div id="realtime-content">
                     <div id="sticky-container">
                         <div class="dropdown-container" style="display: none;">
-                            <input type="text"  id="municipality-search" placeholder="Select municipality" onfocus="showDropdown()" oninput="filterDropdown()" onkeydown="navigateDropdown(event)" autocomplete="off" >
+                            <input type="text" id="municipality-search" placeholder="Select municipality" autocomplete="off" >
                             <span style="display: none;" id="clear-search" onclick="clearSearch()">❌</span>
                             <div  style="display: none;" id="municipality-dropdown" class="dropdown-content"></div>
                         </div> 
@@ -493,10 +493,6 @@ document.addEventListener("DOMContentLoaded", function () {
         this.classList.add("active");
         document.getElementById("historical-btn").classList.remove("active");
 
-        if (municipalityClicked) {
-            document.getElementById('municipality-search').value = municipalityClicked;
-        }
-
         // Reset historical section when switching to real-time
         resetHistoricalSection();
         updateMap(); //changes ni perl
@@ -777,6 +773,7 @@ document.addEventListener("DOMContentLoaded", function () {
             originalYieldData.map(item => item.yield)
         );
         updateRealTimeTable(originalYieldData);
+        if (typeof updateMap === "function") updateMap();
         
 
     }
@@ -896,6 +893,7 @@ document.addEventListener("DOMContentLoaded", function () {
             filteredData.map(item => item.yield)
         );
         updateRealTimeTable(filteredData);
+        if (typeof updateMap === "function") updateMap();
         
     }
 
@@ -1660,10 +1658,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (activeTab === "realtime-btn") {
             console.clear();  // Clears the browser console
             console.log("🔄 Realtime tab is active. Console refreshed.");
-            //tanggal nasa console
-            if (municipalityClicked) {
-                document.getElementById('municipality-search').value = municipalityClicked;
-            }
 
             let municipalityInput1 = document.getElementById("municipality-search").value.trim()
 
@@ -2350,15 +2344,6 @@ document.addEventListener("DOMContentLoaded", function () {
         let municipalityRealInput = document.getElementById("municipality-search");
         let municipalityDropdownReal = document.getElementById("municipality-dropdown");
 
-        if (municipalityRealInput) {
-            municipalityRealInput.addEventListener("input", function () {
-                if (window.updateMap) window.updateMap();
-            });
-            municipalityRealInput.addEventListener("click", function () {
-                if (window.updateMap) window.updateMap();
-            });
-        }
-
         if (municipalityDropdownReal) {
             // Use event delegation to handle dynamically added items
             municipalityDropdownReal.addEventListener("click", function (event) {
@@ -2373,7 +2358,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     municipalityRealInput.value = selectedText;
 
                     // Call updateMap() after selection
-                    if (window.updateMap) window.updateMap(); 
+                    if (typeof updateMap === "function") updateMap();
                 }
             });
         } else {
