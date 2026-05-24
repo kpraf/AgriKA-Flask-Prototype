@@ -85,7 +85,7 @@
                 .then(data => {
                     console.log("✅ Sent to backend:", data);
 
-                    window.top.location.href = '/dashboard?active=historical';
+                    if (window.top && typeof window.top.handleMapMunicipalityClick === 'function') { window.top.handleMapMunicipalityClick('historical', municipality); } else { window.top.location.href = '/dashboard?active=historical'; }
                 })
                 .catch(error => console.error("❌ Error sending to backend:", error));
             } else {

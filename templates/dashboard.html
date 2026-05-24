@@ -490,7 +490,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //  --- Toggle Real-Time / Historical Content --- //
     document.getElementById("realtime-btn").addEventListener("click", function () {
-        window.location.href = "{{ url_for('dashboard') }}";
         document.getElementById("realtime-content").style.display = "block";
         document.getElementById("historical-content").style.display = "none";
         this.classList.add("active");
@@ -874,9 +873,12 @@ document.addEventListener("DOMContentLoaded", function () {
         let dropdown = document.getElementById("municipality-dropdown");
         let clearBtn = document.getElementById("clear-search");
         let sortDropdown = document.getElementById("sort-dropdown");
+        let matchedMunicipality = originalYieldData.find(
+            item => item.municipality.toUpperCase() === municipality.trim().toUpperCase()
+        )?.municipality || municipality;
 
         // Set input value to the selected municipality
-        searchInput.value = municipality;
+        searchInput.value = matchedMunicipality;
 
         // Show the x button
         clearBtn.style.display = "block";
@@ -890,7 +892,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         // NOW we update the chart and table ONLY after selection
-        let filteredData = originalYieldData.filter(item => item.municipality === municipality);
+        let filteredData = originalYieldData.filter(
+            item => item.municipality.toUpperCase() === matchedMunicipality.toUpperCase()
+        );
         updateRealTimeGraph(
             filteredData.map(item => item.municipality),
             filteredData.map(item => item.yield)
@@ -899,6 +903,43 @@ document.addEventListener("DOMContentLoaded", function () {
         if (typeof updateMap === "function") updateMap();
         
     }
+
+    window.handleMapMunicipalityClick = function (activeTab, municipality) {
+        const selectedMunicipality = municipality.trim().toUpperCase();
+
+        if (activeTab === "realtime") {
+            const matchedMunicipality = originalYieldData.find(
+                item => item.municipality.toUpperCase() === selectedMunicipality
+            )?.municipality;
+
+            if (matchedMunicipality) {
+                selectOption(matchedMunicipality);
+            } else {
+                pendingRealtimeMunicipality = selectedMunicipality;
+            }
+
+            window.history.replaceState(null, "", "{{ url_for('dashboard') }}?active=realtime");
+            return;
+        }
+
+        if (activeTab === "historical") {
+            document.getElementById("historical-btn").classList.add("active");
+            document.getElementById("realtime-btn").classList.remove("active");
+            document.getElementById("realtime-content").style.display = "none";
+            document.getElementById("historical-content").style.display = "block";
+
+            inputField.value = selectedMunicipality;
+            clearButton.style.display = "block";
+            updateHistoricalView();
+            updateMunicipalityKPIs(selectedMunicipality);
+            renderYieldChart(selectedMunicipality);
+            renderMunicipalityYieldBarChart(selectedMunicipality);
+            document.getElementById("season-bargraph-container").style.display = "flex";
+            document.getElementById("municipality-seasons-bar-chart-container").style.display = "block";
+
+            window.history.replaceState(null, "", "{{ url_for('dashboard') }}?active=historical");
+        }
+    };
 
 
     //  Close dropdown when clicking outside
@@ -1640,6 +1681,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const yearDropdown = document.getElementById("year-dropdown-his");
     const seasonDropdown = document.getElementById("season-dropdown-his");
 
+    function setMapSrc(mapFrame, src) {
+        const targetUrl = new URL(src, window.location.origin).href;
+        if (mapFrame.src !== targetUrl) {
+            mapFrame.src = src;
+        }
+    }
 
     function updateMap() {
         let mapFrame = document.getElementById("map-frame");
@@ -1658,7 +1705,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // 📌 1️⃣ Prioritize Municipality Search First
         if (municipalityInput) {
             let formattedMunicipality = municipalityInput.replace(/\s+/g, "_").toLowerCase();
-            mapFrame.src = `/static/map_${formattedMunicipality}.html`;
+            setMapSrc(mapFrame, `/static/map_${formattedMunicipality}.html`);
             console.log("Updated map src:", mapFrame.src); // Debugging
             return; // Stop function here if municipality is selected
 
@@ -1678,7 +1725,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             if (municipalityInput1) {
                 let formattedMunicipality = municipalityInput1.replace(/\s+/g, "_").toLowerCase();
-                mapFrame.src = `/static/map_${formattedMunicipality}.html`;
+                setMapSrc(mapFrame, `/static/map_${formattedMunicipality}.html`);
                 console.log("Updated map src:", mapFrame.src); // Debugging
                 return; // Stop function here if municipality is selected
 
@@ -1687,7 +1734,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 ///slider and radio disabled
             }
 
-            mapFrame.src = "{{ url_for('static', filename='realtime_map.html') }}";
+            setMapSrc(mapFrame, "{{ url_for('static', filename='realtime_map.html') }}");
             return;
         } else if (activeTab === "historical-btn") {
             //let yearDropdown = document.getElementById("year-dropdown-his");
@@ -1712,7 +1759,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Selected Season:", season); // Debugging
 
             if (year && season) {
-                mapFrame.src = `/static/historical_map_${year}_${season}.html`;
+                setMapSrc(mapFrame, `/static/historical_map_${year}_${season}.html`);
                 console.log("Updated map src:", mapFrame.src); // Debugging
             } else {
                 console.warn("Year or season not selected.");

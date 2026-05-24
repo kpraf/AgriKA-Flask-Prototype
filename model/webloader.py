@@ -170,7 +170,11 @@ def create_map():
                 })
                 .then(response => response.json())
                 .then(data => {
-                    window.top.location.href = '/dashboard?active=realtime';
+                    if (window.top && typeof window.top.handleMapMunicipalityClick === 'function') {
+                        window.top.handleMapMunicipalityClick('realtime', municipality);
+                    } else {
+                        window.top.location.href = '/dashboard?active=realtime';
+                    }
                 })
                 .catch(err => console.error("❌ Error:", err));
             }
@@ -314,7 +318,11 @@ def create_historical_map(year, season):
                 .then(data => {
                     console.log("✅ Sent to backend:", data);
 
-                    window.top.location.href = '/dashboard?active=historical';
+                    if (window.top && typeof window.top.handleMapMunicipalityClick === 'function') {
+                        window.top.handleMapMunicipalityClick('historical', municipality);
+                    } else {
+                        window.top.location.href = '/dashboard?active=historical';
+                    }
                 })
                 .catch(error => console.error("❌ Error sending to backend:", error));
             } else {
