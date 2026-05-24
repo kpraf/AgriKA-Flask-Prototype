@@ -898,6 +898,7 @@ document.addEventListener("DOMContentLoaded", function () {
             filteredData.map(item => item.yield)
         );
         updateRealTimeTable(filteredData);
+        if (typeof updateMap === "function") updateMap();
         
     }
 
@@ -1716,6 +1717,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (activeTab === "realtime-btn") {
             console.clear();  // Clears the browser console
             console.log("🔄 Realtime tab is active. Console refreshed.");
+
+            let municipalityInput1 = document.getElementById("municipality-search").value.trim()
+
+            if (municipalityInput1) {
+                let formattedMunicipality = municipalityInput1.replace(/\s+/g, "_").toLowerCase();
+                setMapSrc(mapFrame, `/static/map_${formattedMunicipality}.html`);
+                console.log("Updated map src:", mapFrame.src); // Debugging
+                return;
+            }
 
             setMapSrc(mapFrame, "{{ url_for('static', filename='realtime_map.html') }}");
             return;

@@ -390,12 +390,15 @@ def create_all_historical_maps():
 
 def create_maps_per_municipality():
     """
-    Generates a separate Folium map for each municipality with a uniform green color.
+    Generates a separate Folium map for each municipality using real-time yield colors.
     """
     if not os.path.exists("static"):
         os.makedirs("static")
 
     geojson_files = [f"data/{file}" for file in os.listdir("data") if file.endswith(".geojson")]
+    municipalities, yields, yield_data = get_realtime_yield_data()
+    yield_dict = {m.lower(): v for m, v in yield_data.items()}
+    realtime_metadata = get_realtime_metadata()
 
     for file in geojson_files:
         if os.path.exists(file):
@@ -425,21 +428,29 @@ def create_maps_per_municipality():
                         tiles="CartoDB Positron"
                     )
 
+                    yield_value = yield_dict.get(municipality_name, "No data")
+                    year = realtime_metadata["year"]
+                    season = realtime_metadata["season"]
+
                     tooltip_html = folium.Tooltip(
                         f"""
                         <div class="tooltip-municipality" data-municipality="{municipality_name}">
                             🌾 {municipality_name.title()}
                         </div>
+                        <div>
+                            <b>Year:</b> {year}<br>
+                            <b>Season:</b> {season}<br>
+                            <b>Yield:</b> {yield_value if isinstance(yield_value, (int, float)) else 'No Data'}
+                        </div>
                         """,
                         sticky=True
 )
 
-                    # Add filtered municipality boundary with green color
                     geojson_layer = folium.GeoJson(
                         filtered_geojson,
                         name=municipality_name,
-                        style_function=lambda feature: {
-                            "fillColor": "green",
+                        style_function=lambda feature, y=yield_value: {
+                            "fillColor": get_color_realtime(y),
                             "color": "black",
                             "weight": 2,
                             "fillOpacity": 0.7,

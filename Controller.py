@@ -43,12 +43,13 @@ def try_generate_maps():
 
 
 def try_generate_realtime_map():
-    """Refresh the real-time map from the current database data."""
+    """Refresh real-time map files from the current database data."""
     if os.environ.get("GENERATE_REALTIME_MAP_ON_REQUEST", "true").lower() != "true":
         return
 
     try:
         create_map()
+        create_maps_per_municipality()
     except Exception as e:
         print(f"Skipping real-time map refresh: {e}")
 
