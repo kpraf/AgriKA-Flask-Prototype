@@ -443,6 +443,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var municipalityClicked = "{{ municipality_clicked }}"; 
     const params = new URLSearchParams(window.location.search);
     const activeButton = params.get('active');  // Get the value of the 'active' parameter
+    let pendingRealtimeMunicipality = activeButton === 'realtime' && municipalityClicked
+        ? municipalityClicked.trim().toUpperCase()
+        : "";
 
     // Toggle the active class based on the parameter value
     if (activeButton === 'historical') {
@@ -913,7 +916,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function fetchRealTimeData() {
         fetch('/get_real_time_data')
-            fetch('/get_real_time_data')
             .then(response => response.json())
             .then(data => {
                 if (!data.municipalities || !data.yields) {
@@ -938,6 +940,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 // ZOE CHANGES END HERE
 
                 updatePieChart(originalYieldData);
+
+                if (pendingRealtimeMunicipality) {
+                    const matchedMunicipality = data.municipalities.find(
+                        municipality => municipality.toUpperCase() === pendingRealtimeMunicipality
+                    );
+
+                    if (matchedMunicipality) {
+                        selectOption(matchedMunicipality);
+                    }
+
+                    pendingRealtimeMunicipality = "";
+                }
 
             })
             .catch(error => console.error("Error fetching real-time data:", error));

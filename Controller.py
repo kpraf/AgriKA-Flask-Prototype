@@ -42,6 +42,17 @@ def try_generate_maps():
             print(f"Skipping {job_name}: {e}")
 
 
+def try_generate_realtime_map():
+    """Refresh the real-time map from the current database data."""
+    if os.environ.get("GENERATE_REALTIME_MAP_ON_REQUEST", "true").lower() != "true":
+        return
+
+    try:
+        create_map()
+    except Exception as e:
+        print(f"Skipping real-time map refresh: {e}")
+
+
 @scheduler.task('interval', id='sentinel_get', days=1)
 def sentinel_get():
 
@@ -124,6 +135,8 @@ def home():
 # Zoe's Dashboard Update
 @app.route("/dashboard")
 def dashboard():
+    try_generate_realtime_map()
+
     try:
         municipalities, real_time_yields, real_time_yield_data = get_realtime_yield_data()  #Unpacking three values ✅ 
     except Exception as e:
