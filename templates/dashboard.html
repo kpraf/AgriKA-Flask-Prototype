@@ -443,9 +443,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var municipalityClicked = "{{ municipality_clicked }}"; 
     const params = new URLSearchParams(window.location.search);
     const activeButton = params.get('active');  // Get the value of the 'active' parameter
-    let pendingRealtimeMunicipality = activeButton === 'realtime' && municipalityClicked
-        ? municipalityClicked.trim().toUpperCase()
-        : "";
+    let pendingRealtimeMunicipality = "";
 
     // Toggle the active class based on the parameter value
     if (activeButton === 'historical') {
@@ -900,7 +898,6 @@ document.addEventListener("DOMContentLoaded", function () {
             filteredData.map(item => item.yield)
         );
         updateRealTimeTable(filteredData);
-        if (typeof updateMap === "function") updateMap();
         
     }
 
@@ -1703,7 +1700,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("Municipality search:", municipalityInput); // Debugging
 
         // 📌 1️⃣ Prioritize Municipality Search First
-        if (municipalityInput) {
+        if (activeTab === "historical-btn" && municipalityInput) {
             let formattedMunicipality = municipalityInput.replace(/\s+/g, "_").toLowerCase();
             setMapSrc(mapFrame, `/static/map_${formattedMunicipality}.html`);
             console.log("Updated map src:", mapFrame.src); // Debugging
@@ -1719,20 +1716,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (activeTab === "realtime-btn") {
             console.clear();  // Clears the browser console
             console.log("🔄 Realtime tab is active. Console refreshed.");
-
-            let municipalityInput1 = document.getElementById("municipality-search").value.trim()
-
-            
-            if (municipalityInput1) {
-                let formattedMunicipality = municipalityInput1.replace(/\s+/g, "_").toLowerCase();
-                setMapSrc(mapFrame, `/static/map_${formattedMunicipality}.html`);
-                console.log("Updated map src:", mapFrame.src); // Debugging
-                return; // Stop function here if municipality is selected
-
-                //disableYearAndSeasonControls()
-
-                ///slider and radio disabled
-            }
 
             setMapSrc(mapFrame, "{{ url_for('static', filename='realtime_map.html') }}");
             return;

@@ -160,7 +160,7 @@ def dashboard():
             "updated_since": "N/A",
         }
 
-    municipality_clicked = session.get('municipality_clicked','')  # Default to 'Not clicked' if not found
+    municipality_clicked = session.pop('municipality_clicked', '')  # Use map click once, then clear it.
 
     #yearly_trends = process_yearly_trends(historical_yield_data)
     #municipality_averages = process_municipality_averages(historical_yield_data)
