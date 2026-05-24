@@ -87,7 +87,9 @@ def seed_historical_dummy_data(cursor, start_year=2018, end_year=2024):
                     SELECT id_rice, %s
                     FROM rice_field
                     WHERE municipality = %s AND year = %s AND season = %s
-                    ON CONFLICT (id_rice) DO NOTHING
+                    ON CONFLICT (id_rice) DO UPDATE
+                    SET yield = EXCLUDED.yield
+                    WHERE historical.yield IS NULL OR historical.yield = 0
                     """,
                     (
                         get_dummy_historical_yield(municipality, year, season),
@@ -114,7 +116,11 @@ def seed_realtime_dummy_data(cursor, year=2024, season=2):
                 SELECT id_rice, %s, %s, %s, %s
                 FROM rice_field
                 WHERE municipality = %s AND year = %s AND season = %s
-                ON CONFLICT (id_rice, date) DO NOTHING
+                ON CONFLICT (id_rice, date) DO UPDATE
+                SET phase = EXCLUDED.phase,
+                    season = EXCLUDED.season,
+                    yield = EXCLUDED.yield
+                WHERE real_time.yield IS NULL OR real_time.yield = 0
                 """,
                 (
                     sample_date,
@@ -134,6 +140,16 @@ def seed_dummy_data(conn, start_year=2018, end_year=2024):
         seed_rice_fields(cursor, start_year, end_year)
         seed_historical_dummy_data(cursor, start_year, end_year)
         seed_realtime_dummy_data(cursor, year=end_year, season=2)
+
+
+def get_table_counts(cursor):
+    """Return row counts for the app tables."""
+    counts = {}
+    for table_name in ("rice_field", "historical", "real_time"):
+        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+        counts[table_name] = cursor.fetchone()[0]
+
+    return counts
 
 
 # =========================
@@ -161,7 +177,15 @@ def initialize_database(start_year=2018, end_year=2024):
             seed_realtime_dummy_data(cursor, year=end_year, season=2)
 
         conn.commit()
-        print("Database schema and dummy data are ready.")
+        with conn.cursor() as cursor:
+            counts = get_table_counts(cursor)
+
+        print(
+            "Database schema and dummy data are ready. "
+            f"rice_field={counts['rice_field']}, "
+            f"historical={counts['historical']}, "
+            f"real_time={counts['real_time']}."
+        )
 
     except Exception:
         conn.rollback()

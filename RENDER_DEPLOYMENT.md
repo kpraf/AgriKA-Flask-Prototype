@@ -19,6 +19,19 @@
 Use the Render Postgres internal database URL for `DATABASE_URL` when the web
 service and database are in the same Render region.
 
+You can also use Supabase because the app only needs a PostgreSQL connection
+string. In Render, set `DATABASE_URL` to your Supabase PostgreSQL URI. If the URI
+does not already include SSL settings, append `?sslmode=require`.
+
+For example:
+
+```text
+postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres?sslmode=require
+```
+
+If your password has special characters, URL-encode it before placing it in the
+connection string.
+
 ## Database setup
 
 `data/laguna_crop_schema_postgres.sql` contains the PostgreSQL schema expected by
@@ -29,8 +42,9 @@ run directly against Render Postgres.
 
 The app automatically creates the tables and inserts deterministic dummy data
 for `rice_field`, `historical`, and `real_time` on startup when `AUTO_INIT_DB`
-is unset or set to `true`. This works on Render's free tier because it does not
-require Shell access.
+is unset or set to `true`. Existing `0` or blank dummy yields are refreshed, but
+nonzero historical values are left alone. This works on Render's free tier
+because it does not require Shell access.
 
 If you have Shell access, you can also run the setup manually:
 
