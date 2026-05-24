@@ -1,4 +1,4 @@
-from model.db import get_db_connection, get_realtime_yield_data
+from model.db import get_db_connection, get_realtime_metadata, get_realtime_yield_data
 import folium
 import os
 import json
@@ -77,6 +77,7 @@ def create_map():
 
     municipalities, yields, yield_data = get_realtime_yield_data()
     yield_dict = {m.lower(): v for m, v in yield_data.items()}
+    realtime_metadata = get_realtime_metadata()
 
     valid_yields = {mun: y for mun, y in yield_dict.items() if isinstance(y, (int, float)) and y > 0}
     max_mun = max(valid_yields, key=valid_yields.get) if valid_yields else None
@@ -93,8 +94,8 @@ def create_map():
                 for feature in geojson_data["features"]:
                     municipality_name = feature["properties"].get("name", "Unknown Municipality").strip().lower()
                     yield_value = yield_dict.get(municipality_name, "No data")
-                    year = "2024"  # or use current year dynamically
-                    season = "Second"  # or determine via logic if needed
+                    year = realtime_metadata["year"]
+                    season = realtime_metadata["season"]
 
                     tooltip_html = folium.Tooltip(
                         f"""

@@ -148,6 +148,18 @@ def dashboard():
     except Exception as e:
         print("❌ Error in get_historical_data:", e)
         historical_yield_data = []
+
+    try:
+        realtime_metadata = get_realtime_metadata()
+    except Exception as e:
+        print("❌ Error in get_realtime_metadata:", e)
+        realtime_metadata = {
+            "year": "N/A",
+            "season": "N/A",
+            "phase": "N/A",
+            "updated_since": "N/A",
+        }
+
     municipality_clicked = session.get('municipality_clicked','')  # Default to 'Not clicked' if not found
 
     #yearly_trends = process_yearly_trends(historical_yield_data)
@@ -163,7 +175,8 @@ def dashboard():
 
         # Pass the historical yield data to the template
         historical_yield_data=historical_yield_data,
-        municipality_clicked=municipality_clicked
+        municipality_clicked=municipality_clicked,
+        realtime_metadata=realtime_metadata
         #yearly_trends=yearly_trends,
         #municipality_averages=municipality_averages,
         #seasonal_data=seasonal_data,

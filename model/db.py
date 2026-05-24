@@ -351,6 +351,52 @@ def get_realtime_yield_data():
         conn.close()
 
 
+def get_realtime_metadata():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        cursor.execute(
+            """
+            SELECT date, phase, season
+            FROM real_time
+            ORDER BY date DESC
+            LIMIT 1
+            """
+        )
+        row = cursor.fetchone()
+
+        if not row:
+            return {
+                "year": "N/A",
+                "season": "N/A",
+                "phase": "N/A",
+                "updated_since": "N/A",
+            }
+
+        season_label = "Wet" if row["season"] == 1 else "Dry" if row["season"] == 2 else "N/A"
+
+        return {
+            "year": row["date"].year,
+            "season": season_label,
+            "phase": row["phase"] if row["phase"] is not None else "N/A",
+            "updated_since": row["date"].strftime("%m-%d-%Y"),
+        }
+
+    except Exception as e:
+        print(f"Error fetching real-time metadata: {e}")
+        return {
+            "year": "N/A",
+            "season": "N/A",
+            "phase": "N/A",
+            "updated_since": "N/A",
+        }
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 # =========================
 # MULTI-YEAR DATA
 # =========================
