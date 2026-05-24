@@ -27,9 +27,10 @@ the Flask app.
 The older `data/laguna_crop_database.sql` file is MySQL syntax and should not be
 run directly against Render Postgres.
 
-The app automatically creates the tables and baseline `rice_field` rows on
-startup when `AUTO_INIT_DB` is unset or set to `true`. This works on Render's
-free tier because it does not require Shell access.
+The app automatically creates the tables and inserts deterministic dummy data
+for `rice_field`, `historical`, and `real_time` on startup when `AUTO_INIT_DB`
+is unset or set to `true`. This works on Render's free tier because it does not
+require Shell access.
 
 If you have Shell access, you can also run the setup manually:
 
@@ -37,8 +38,9 @@ If you have Shell access, you can also run the setup manually:
 python scripts/setup_render_db.py
 ```
 
-That command creates the tables and inserts the baseline `rice_field` rows for
-all municipalities from 2018 through 2024.
+That command creates the tables and inserts dummy data for all application
+tables. The seed covers all municipalities from 2018 through 2024 and adds
+sample real-time phase rows for the latest seeded season.
 
 To import historical yield values, prepare a CSV with these columns:
 

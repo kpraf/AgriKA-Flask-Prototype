@@ -41,6 +41,101 @@ MUNICIPALITIES = [
 ]
 
 
+def get_dummy_historical_yield(municipality, year, season):
+    """Return a stable sample yield for a municipality/year/season."""
+    municipality_index = MUNICIPALITIES.index(municipality) + 1
+    year_offset = year - 2018
+    season_bonus = 0.24 if season == 2 else 0
+    municipality_bonus = (municipality_index % 8) * 0.16
+    small_variation = ((municipality_index * year * season) % 9) * 0.03
+
+    return round(3.05 + year_offset * 0.08 + season_bonus + municipality_bonus + small_variation, 2)
+
+
+def get_dummy_realtime_yield(municipality, phase):
+    """Return a stable sample in-season predicted yield for real-time displays."""
+    municipality_index = MUNICIPALITIES.index(municipality) + 1
+    municipality_bonus = (municipality_index % 7) * 0.08
+    phase_bonus = phase * 0.54
+
+    return round(0.48 + phase_bonus + municipality_bonus, 2)
+
+
+def seed_rice_fields(cursor, start_year=2018, end_year=2024):
+    """Create one rice_field row per municipality/year/season."""
+    for municipality in MUNICIPALITIES:
+        for year in range(start_year, end_year + 1):
+            for season in (1, 2):
+                cursor.execute(
+                    """
+                    INSERT INTO rice_field (municipality, year, season)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (municipality, year, season) DO NOTHING
+                    """,
+                    (municipality, year, season),
+                )
+
+
+def seed_historical_dummy_data(cursor, start_year=2018, end_year=2024):
+    """Add sample historical yield data for every seeded rice_field row."""
+    for municipality in MUNICIPALITIES:
+        for year in range(start_year, end_year + 1):
+            for season in (1, 2):
+                cursor.execute(
+                    """
+                    INSERT INTO historical (id_rice, yield)
+                    SELECT id_rice, %s
+                    FROM rice_field
+                    WHERE municipality = %s AND year = %s AND season = %s
+                    ON CONFLICT (id_rice) DO NOTHING
+                    """,
+                    (
+                        get_dummy_historical_yield(municipality, year, season),
+                        municipality,
+                        year,
+                        season,
+                    ),
+                )
+
+
+def seed_realtime_dummy_data(cursor, year=2024, season=2):
+    """Add sample real-time phase rows for the latest seeded season."""
+    phase_dates = (
+        (1, f"{year}-04-20"),
+        (2, f"{year}-06-20"),
+        (3, f"{year}-08-20"),
+    )
+
+    for municipality in MUNICIPALITIES:
+        for phase, sample_date in phase_dates:
+            cursor.execute(
+                """
+                INSERT INTO real_time (id_rice, date, phase, season, yield)
+                SELECT id_rice, %s, %s, %s, %s
+                FROM rice_field
+                WHERE municipality = %s AND year = %s AND season = %s
+                ON CONFLICT (id_rice, date) DO NOTHING
+                """,
+                (
+                    sample_date,
+                    phase,
+                    season,
+                    get_dummy_realtime_yield(municipality, phase),
+                    municipality,
+                    year,
+                    season,
+                ),
+            )
+
+
+def seed_dummy_data(conn, start_year=2018, end_year=2024):
+    """Seed every application table with deterministic dummy data."""
+    with conn.cursor() as cursor:
+        seed_rice_fields(cursor, start_year, end_year)
+        seed_historical_dummy_data(cursor, start_year, end_year)
+        seed_realtime_dummy_data(cursor, year=end_year, season=2)
+
+
 # =========================
 # DATABASE CONNECTION
 # =========================
@@ -61,21 +156,12 @@ def initialize_database(start_year=2018, end_year=2024):
     try:
         with conn.cursor() as cursor:
             cursor.execute(schema_path.read_text(encoding="utf-8"))
-
-            for municipality in MUNICIPALITIES:
-                for year in range(start_year, end_year + 1):
-                    for season in (1, 2):
-                        cursor.execute(
-                            """
-                            INSERT INTO rice_field (municipality, year, season)
-                            VALUES (%s, %s, %s)
-                            ON CONFLICT (municipality, year, season) DO NOTHING
-                            """,
-                            (municipality, year, season),
-                        )
+            seed_rice_fields(cursor, start_year, end_year)
+            seed_historical_dummy_data(cursor, start_year, end_year)
+            seed_realtime_dummy_data(cursor, year=end_year, season=2)
 
         conn.commit()
-        print("Database schema and baseline rice_field rows are ready.")
+        print("Database schema and dummy data are ready.")
 
     except Exception:
         conn.rollback()

@@ -1,43 +1,17 @@
 import argparse
 import csv
 import os
+import sys
 from pathlib import Path
 
 import psycopg2
 
 
-MUNICIPALITIES = [
-    "ALAMINOS",
-    "BAY",
-    "CABUYAO",
-    "CALAUAN",
-    "CAVINTI",
-    "BINAN",
-    "CALAMBA",
-    "SAN PEDRO",
-    "SANTA ROSA",
-    "FAMY",
-    "KALAYAAN",
-    "LILIW",
-    "LOS BANOS",
-    "LUISIANA",
-    "LUMBAN",
-    "MABITAC",
-    "MAGDALENA",
-    "MAJAYJAY",
-    "NAGCARLAN",
-    "PAETE",
-    "PAGSANJAN",
-    "PAKIL",
-    "PANGIL",
-    "PILA",
-    "RIZAL",
-    "SAN PABLO",
-    "SANTA CRUZ",
-    "SANTA MARIA",
-    "SINILOAN",
-    "VICTORIA",
-]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from model.db import seed_dummy_data
 
 
 def connect():
@@ -55,22 +29,6 @@ def apply_schema(conn):
 
     with conn.cursor() as cursor:
         cursor.execute(schema_sql)
-    conn.commit()
-
-
-def seed_rice_fields(conn, start_year, end_year):
-    with conn.cursor() as cursor:
-        for municipality in MUNICIPALITIES:
-            for year in range(start_year, end_year + 1):
-                for season in (1, 2):
-                    cursor.execute(
-                        """
-                        INSERT INTO rice_field (municipality, year, season)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT (municipality, year, season) DO NOTHING
-                        """,
-                        (municipality, year, season),
-                    )
     conn.commit()
 
 
@@ -136,12 +94,13 @@ def main():
 
     with connect() as conn:
         apply_schema(conn)
-        seed_rice_fields(conn, args.start_year, args.end_year)
+        seed_dummy_data(conn, args.start_year, args.end_year)
 
         if args.historical_csv:
             imported = import_historical_csv(conn, args.historical_csv)
             print(f"historical rows imported: {imported}")
 
+        conn.commit()
         print_counts(conn)
 
 
