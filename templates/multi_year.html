@@ -99,7 +99,7 @@
           <label for="chart"><strong>Chart Controls:</strong></label>
           <div class="chart-control-buttons">
             <button type="button" id="resetZoomBtn">Reset Zoom</button>
-            <button id="resetIsolationBtn">Reset Isolation</button>
+            <button type="button" id="resetIsolationBtn">Reset Isolation</button>
             <button id="togglePan" type="button">Toggle Pan: On</button>
             <button id="toggleZoom" type="button">Toggle Zoom: On</button>
           </div>
@@ -168,6 +168,32 @@
   const originalLabels = {{ years | map('string') | list | tojson }};
   const originalDatasets = {{ chart_datasets | tojson }};
   const ctx = document.getElementById('yieldChart').getContext('2d');
+  const yieldValues = originalDatasets
+    .flatMap(dataset => dataset.data || [])
+    .map(value => Number(value))
+    .filter(value => Number.isFinite(value) && value > 0);
+
+  function getYieldAxisConfig(values) {
+    if (!values.length) {
+      return { min: 0, max: 1, stepSize: 0.2 };
+    }
+
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const range = Math.max(maxValue - minValue, 0.5);
+    const padding = Math.max(range * 0.12, 0.15);
+    const min = Math.max(0, Math.floor((minValue - padding) * 4) / 4);
+    const max = Math.ceil((maxValue + padding) * 4) / 4;
+    const axisRange = max - min;
+
+    return {
+      min,
+      max,
+      stepSize: axisRange <= 2.5 ? 0.25 : 0.5
+    };
+  }
+
+  const yieldAxisConfig = getYieldAxisConfig(yieldValues);
 
   const yieldChart = new Chart(ctx, {
     type: 'line',
@@ -309,7 +335,12 @@
       },
       scales: {
         y: {
-          beginAtZero: true,
+          min: yieldAxisConfig.min,
+          max: yieldAxisConfig.max,
+          ticks: {
+            stepSize: yieldAxisConfig.stepSize,
+            callback: value => Number(value).toFixed(2).replace(/\.?0+$/, '')
+          },
           title: {
             display: true,
             text: 'Rice Yield (tons/ha)',

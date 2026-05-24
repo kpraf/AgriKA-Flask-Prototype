@@ -209,14 +209,15 @@ def multi_year():
         print("❌ Error in get_all_municipalities:", e)
         all_munis = []
 
-    if not municipalities:
-        municipalities = all_munis[:5]
-
-    # Always fetch all season data to allow conditional processing
-    try:
-        historical_data = get_multi_year(season=None, municipalities=municipalities)
-    except Exception as e:
-        print("❌ Error in get_multi_year:", e)
+    # Always fetch all season data to allow conditional processing.
+    # If no municipality is selected, keep the chart empty instead of auto-selecting cities.
+    if municipalities:
+        try:
+            historical_data = get_multi_year(season=None, municipalities=municipalities)
+        except Exception as e:
+            print("❌ Error in get_multi_year:", e)
+            historical_data = []
+    else:
         historical_data = []
 
     # chart_data[municipality][season][year] = yield
@@ -242,7 +243,7 @@ def multi_year():
             year_data = seasons.get(season, {})
             dataset = {
                 'label': f"{municipality} - Season {season}",
-                'data': [year_data.get(year, 0) for year in sorted_years],
+                'data': [year_data.get(year) for year in sorted_years],
                 'fill': False,
                 'borderColor': color_solid if season == 1 else color_faded,
                 'backgroundColor': color_solid if season == 1 else color_faded,  
@@ -257,7 +258,7 @@ def multi_year():
                 year_data = seasons.get(season_val, {})
                 dataset = {
                     'label': f"{municipality} - Season {season_val}",
-                    'data': [year_data.get(year, 0) for year in sorted_years],
+                    'data': [year_data.get(year) for year in sorted_years],
                     'fill': False,
                     'borderColor': color_solid if season_val == 1 else color_faded,
                     'backgroundColor': color_solid if season_val == 1 else color_faded,  # <- Add this

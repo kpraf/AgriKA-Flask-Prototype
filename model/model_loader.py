@@ -47,7 +47,7 @@ class ModelLoader:
                     "Predicted Yield": predicted_yield
                 }
                 self.yield_results.append(result)
-                store_prediction_result(result)  # Store in database
+                store_prediction_result(result) 
 
             except Exception as e:
                 print(f"Error processing entry {entry}: {e}")
@@ -63,7 +63,7 @@ class ModelLoader:
         weather_df = pd.DataFrame([weather_data], columns=self.weather_features)
 
         # Scale the temperature
-        weather_scaled = self.scaler.transform(weather_df).flatten()  # ✅ No mismatch errors!
+        weather_scaled = self.scaler.transform(weather_df).flatten()
         
         if (month == 3 and day >= 16) or (4 <= month <= 9 and (month != 9 or day <= 15)):
             # Second Cycle
